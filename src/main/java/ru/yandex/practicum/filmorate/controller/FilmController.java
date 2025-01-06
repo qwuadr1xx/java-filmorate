@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,31 +23,35 @@ public class FilmController {
     private long id = 1;
 
     @GetMapping
-    public String getFilm() {
+    public List<Film> getFilm() {
         log.info("Выведение списка фильмов");
-        return films.values().toString();
+        return new ArrayList<>(films.values());
     }
 
     @PostMapping
-    public void createFilm(@Valid @RequestBody Film film) {
+    public Film createFilm(@Valid @RequestBody Film film) {
         log.info("Начало добавления фильма");
         long localId = generateId();
-        log.debug(String.valueOf(localId));
-        log.debug(film.toString());
-        films.put(localId, film.toBuilder().id(localId).build());
+        Film localFilm = film.toBuilder().id(localId).build();
+
+        log.debug(localFilm.toString());
+
+        films.put(localId, localFilm);
+        return localFilm;
     }
 
     @PutMapping
-    public void updateFilm(@Valid @RequestBody Film film) {
-        if (films.containsKey(film.getId())) {
-            log.info("Начало обновления фильма");
-            log.debug(film.toString());
-            films.put(film.getId(), film);
-        } else {
-            log.info("фильм с {} id не существует", film.getId().toString());
-
-
+    public Film updateFilm(@Valid @RequestBody Film film) {
+        if (!films.containsKey(film.getId())) {
+            log.info("фильма с {} id не существует", film.getId().toString());
+            throw new IllegalStateException("Фильм с данным id не существует");
         }
+
+        log.info("Начало обновления фильма");
+        log.debug(film.toString());
+
+        films.put(film.getId(), film);
+        return film;
     }
 
     private long generateId() {

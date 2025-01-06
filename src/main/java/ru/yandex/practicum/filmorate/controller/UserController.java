@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -22,29 +24,35 @@ public class UserController {
     private long id = 1;
 
     @GetMapping
-    public String getUsers() {
+    public List<User> getUsers() {
         log.info("Выведение списка пользователей");
-        return users.values().toString();
+        return new ArrayList<>(users.values());
     }
 
     @PostMapping
-    public void createUser(@Valid @RequestBody User user) {
+    public User createUser(@Valid @RequestBody User user) {
         log.info("Начало добавления пользователя");
         long localId = generateId();
-        log.debug(String.valueOf(localId));
+        User localUser = user.toBuilder().id(localId).build();
+
         log.debug(user.toString());
-        users.put(localId, user.toBuilder().id(localId).build());
+
+        users.put(localId, localUser);
+        return localUser;
     }
 
     @PutMapping
-    public void updateUser(@Valid @RequestBody User user) {
-        if (users.containsKey(user.getId())) {
-            log.info("Начало обновления пользователя");
-            log.debug(user.toString());
-            users.put(user.getId(), user);
-        } else {
+    public User updateUser(@Valid @RequestBody User user) {
+        if (!users.containsKey(user.getId())) {
             log.info("пользователя с {} id не существует", user.getId().toString());
+            throw new IllegalStateException("Пользователя с данным id не существует");
         }
+
+        log.info("Начало обновления пользователя");
+        log.debug(user.toString());
+
+        users.put(user.getId(), user);
+        return user;
     }
 
     private long generateId() {
