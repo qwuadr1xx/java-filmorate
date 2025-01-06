@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.dto.UserRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -13,7 +13,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserValidationTest {
-    private User user;
+    private UserRequest user;
     private static Validator validator;
 
     @BeforeEach
@@ -23,38 +23,38 @@ class UserValidationTest {
 
     @Test
     void validateUserWithoutLogin() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("user@example.com")
                 .login("")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(2, violations.size());
     }
 
     @Test
     void validateUserWithoutEmail() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("")
                 .login("User1")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(1, violations.size());
         assertEquals("Электронная почта не может быть пустой", violations.iterator().next().getMessage());
     }
 
     @Test
     void validateUserWithIncorrectEmail() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("incorrect email")
                 .login("User1")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(1, violations.size());
         assertEquals("email не соответствует стандарту",
                 violations.iterator().next().getMessage());
@@ -62,13 +62,13 @@ class UserValidationTest {
 
     @Test
     void validateUserWithIncorrectLogin() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("user@example.com")
                 .login("абвгд")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(1, violations.size());
         assertEquals("Логин содержит недопустимые символы",
                 violations.iterator().next().getMessage());
@@ -76,13 +76,13 @@ class UserValidationTest {
 
     @Test
     void validateUserWithFutureBirthday() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("user@example.com")
                 .login("User1")
                 .birthday(LocalDate.of(2050, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(1, violations.size());
         assertEquals("Дата рождения не может быть в будущем",
                 violations.iterator().next().getMessage());
@@ -90,13 +90,13 @@ class UserValidationTest {
 
     @Test
     void validateGoodUser() {
-        user = User.builder()
+        user = UserRequest.builder()
                 .id(1L)
                 .email("user@example.com")
                 .login("User1")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);
         assertEquals(0, violations.size());
     }
 }

@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import ru.yandex.practicum.filmorate.dto.UserMapper;
+import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.model.User;
 
 @RestController
@@ -30,7 +32,9 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) {
+    public User createUser(@Valid @RequestBody UserRequest userRequest) {
+        User user = UserMapper.mapUserFromDto(userRequest);
+
         log.info("Начало добавления пользователя");
         long localId = generateId();
         User localUser = user.toBuilder().id(localId).build();
@@ -42,7 +46,9 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
+    public User updateUser(@Valid @RequestBody UserRequest userRequest) {
+        User user = UserMapper.mapUserFromDto(userRequest);
+
         if (!users.containsKey(user.getId())) {
             log.info("пользователя с {} id не существует", user.getId().toString());
             throw new IllegalStateException("Пользователя с данным id не существует");
