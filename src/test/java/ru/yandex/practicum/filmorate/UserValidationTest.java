@@ -65,7 +65,7 @@ class UserValidationTest {
         user = UserRequest.builder()
                 .id(1L)
                 .email("user@example.com")
-                .login("абвгд")
+                .login("us er")
                 .birthday(LocalDate.of(2000, 10, 10))
                 .build();
         Set<ConstraintViolation<UserRequest>> violations = validator.validate(user);

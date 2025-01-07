@@ -12,7 +12,7 @@ public final class UserMapper {
                 .id(userRequest.getId())
                 .email(userRequest.getEmail())
                 .login(userRequest.getLogin())
-                .name((userRequest.getName() == null) ? userRequest.getLogin() : userRequest.getName())
+                .name((userRequest.getName() == null || userRequest.getName().isBlank()) ? userRequest.getLogin() : userRequest.getName())
                 .birthday(userRequest.getBirthday())
                 .build();
     }

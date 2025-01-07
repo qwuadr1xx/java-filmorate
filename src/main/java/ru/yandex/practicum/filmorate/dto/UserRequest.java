@@ -19,7 +19,7 @@ public class UserRequest {
     private final String email;
 
     @NotBlank(message = "Логин не может быть пустым")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Логин содержит недопустимые символы")
+    @Pattern(regexp = "\\S+", message = "Логин содержит недопустимые символы")
     private final String login;
 
     private final String name;
