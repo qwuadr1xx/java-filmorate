@@ -98,7 +98,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public List<Film> getLikedFilms() {
         return new ArrayList<>(likes.keySet().stream()
-                .sorted((id1, id2) -> Long.compare(likes.get(id1).size(), likes.get(id2).size())).map(films::get)
+                .sorted((id1, id2) -> Long.compare(likes.get(id2).size(), likes.get(id1).size())).map(films::get)
                 .toList());
     }
 
