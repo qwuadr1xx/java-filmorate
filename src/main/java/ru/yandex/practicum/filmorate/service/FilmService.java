@@ -56,6 +56,6 @@ public class FilmService {
             throw new BadRequestException("Значение count не может быть отрицательным", Entity.FILM);
         }
 
-        return new ArrayList<>(inMemoryFilmStorage.getLikedFilms().subList(0, count));
+        return new ArrayList<>(inMemoryFilmStorage.getLikedFilms().subList(0, Integer.min(inMemoryFilmStorage.getLikedFilms().size(), count)));
     }
 }
