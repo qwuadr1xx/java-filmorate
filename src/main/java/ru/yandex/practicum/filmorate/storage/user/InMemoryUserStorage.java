@@ -34,6 +34,7 @@ public class InMemoryUserStorage implements UserStorage {
         User localUser = user.toBuilder().id(localId).build();
 
         users.put(localId, localUser);
+        friends.put(localId, new HashSet<>());
         return localUser;
     }
 
@@ -65,19 +66,9 @@ public class InMemoryUserStorage implements UserStorage {
         isIdExists(id);
         isIdExists(friendId);
 
-        Set<Long> userFriends;
-        if (friends.containsKey(id)) {
-            userFriends = friends.get(id);
-        } else {
-            userFriends = new HashSet<>();
-        }
+        Set<Long> userFriends = friends.get(id);
 
-        Set<Long> friendFriends;
-        if (friends.containsKey(friendId)) {
-            friendFriends = friends.get(friendId);
-        } else {
-            friendFriends = new HashSet<>();
-        }
+        Set<Long> friendFriends = friends.get(friendId);
 
         userFriends.add(friendId);
         friendFriends.add(id);
@@ -92,19 +83,8 @@ public class InMemoryUserStorage implements UserStorage {
         isIdExists(id);
         isIdExists(friendId);
 
-        Set<Long> userFriends;
-        if (friends.containsKey(id)) {
-            userFriends = friends.get(id);
-        } else {
-            throw new BadRequestException(String.format("У пользователя с id %d нет друзей", id), Entity.USER);
-        }
-
-        Set<Long> friendFriends;
-        if (friends.containsKey(friendId)) {
-            friendFriends = friends.get(friendId);
-        } else {
-            throw new BadRequestException(String.format("У пользователя с id %d нет друзей", friendId), Entity.USER);
-        }
+        Set<Long> userFriends = friends.get(id);
+        Set<Long> friendFriends = friends.get(friendId);
 
         userFriends.remove(friendId);
         friendFriends.remove(id);
@@ -128,19 +108,9 @@ public class InMemoryUserStorage implements UserStorage {
         isIdExists(id);
         isIdExists(otherId);
 
-        Set<Long> userFriends;
-        if (friends.containsKey(id)) {
-            userFriends = friends.get(id);
-        } else {
-            throw new BadRequestException(String.format("У пользователя с id %d нет друзей", id), Entity.USER);
-        }
+        Set<Long> userFriends = friends.get(id);
 
-        Set<Long> otherUserFriends;
-        if (friends.containsKey(otherId)) {
-            otherUserFriends = friends.get(otherId);
-        } else {
-            throw new BadRequestException(String.format("У пользователя с id %d нет друзей", otherId), Entity.USER);
-        }
+        Set<Long> otherUserFriends = friends.get(otherId);
 
         Set<User> intersection = new HashSet<>(userFriends.stream().map(users::get).toList());
         intersection.retainAll(otherUserFriends.stream().map(users::get).toList());
