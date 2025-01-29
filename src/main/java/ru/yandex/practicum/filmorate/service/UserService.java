@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    UserStorage inMemoryUserStorage;
+    private final UserStorage inMemoryUserStorage;
 
     public List<User> getUsersService() {
         return new ArrayList<>(inMemoryUserStorage.getAll());
