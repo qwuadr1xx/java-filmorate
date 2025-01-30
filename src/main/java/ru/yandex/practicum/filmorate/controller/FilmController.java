@@ -34,7 +34,7 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable long id) {
-        log.info("Выведение фильма");
+        log.info("Выведение фильма c id {}", id);
 
         return filmService.getFilmById(id);
     }

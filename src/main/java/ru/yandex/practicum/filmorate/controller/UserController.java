@@ -30,19 +30,19 @@ public class UserController {
     public List<User> getUsers() {
         log.info("Выведение списка пользователей");
 
-        return new ArrayList<>(userService.getUsersService());
+        return new ArrayList<>(userService.getUsers());
     }
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable final long id) {
-        log.info("Выведение пользователя");
+        log.info("Выведение пользователя c id {}", id);
 
-        return userService.getUserByIdService(id);
+        return userService.getUserById(id);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> getUserFriends(@PathVariable final long id) {
-        log.info("Получение списка друзей");
+        log.info("Получение списка друзей пользователя {}", id);
 
         return userService.getFriends(id);
     }
@@ -58,26 +58,26 @@ public class UserController {
     public User createUser(@Valid @RequestBody final UserRequest userRequest) {
         log.info("Начало добавления пользователя");
 
-        return userService.createUserService(userRequest);
+        return userService.createUser(userRequest);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody final UserRequest userRequest) {
         log.info("Начало обновления пользователя");
 
-        return userService.updateUserService(userRequest);
+        return userService.updateUser(userRequest);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public User addFriend(@PathVariable final long id, @PathVariable final long friendId) {
-        log.info("Добавление друга");
+        log.info("Добавление друга(возвращаемый объект - User с friendId {}", friendId);
 
         return userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public User removeFriend(@PathVariable final long id, @PathVariable final long friendId) {
-        log.info("Удаление друга");
+        log.info("Удаление друга(возвращаемый объект - User с friendId {}", friendId);
 
         return userService.removeFriend(id, friendId);
     }

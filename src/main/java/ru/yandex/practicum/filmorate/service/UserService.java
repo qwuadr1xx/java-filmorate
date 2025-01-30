@@ -17,21 +17,21 @@ import java.util.List;
 public class UserService {
     private final UserStorage inMemoryUserStorage;
 
-    public List<User> getUsersService() {
+    public List<User> getUsers() {
         return new ArrayList<>(inMemoryUserStorage.getAll());
     }
 
-    public User getUserByIdService(long id) {
+    public User getUserById(long id) {
         return inMemoryUserStorage.getById(id).orElseThrow(() -> new NotFoundException(id, Entity.USER));
     }
 
-    public User createUserService(UserRequest userRequest) {
+    public User createUser(UserRequest userRequest) {
         User user = UserMapper.mapUserFromDto(userRequest);
 
         return inMemoryUserStorage.create(user);
     }
 
-    public User updateUserService(UserRequest userRequest) {
+    public User updateUser(UserRequest userRequest) {
         User user = UserMapper.mapUserFromDto(userRequest);
 
         return inMemoryUserStorage.update(user);
