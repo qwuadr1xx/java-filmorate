@@ -1,49 +1,59 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
+import ru.yandex.practicum.filmorate.enums.Entity;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Service
+@RequiredArgsConstructor
 public class UserService {
-    private final Map<Long, User> users;
-    private long id;
+    private final UserStorage inMemoryUserStorage;
 
-    public UserService() {
-        users = new HashMap<>();
-        id = 1L;
+    public List<User> getUsers() {
+        return new ArrayList<>(inMemoryUserStorage.getAll());
     }
 
-    public List<User> getUsersService() {
-        return new ArrayList<>(users.values());
+    public User getUserById(long id) {
+        return inMemoryUserStorage.getById(id).orElseThrow(() -> new NotFoundException(id, Entity.USER));
     }
 
-    public User createUserService(UserRequest userRequest) {
+    public User createUser(UserRequest userRequest) {
         User user = UserMapper.mapUserFromDto(userRequest);
 
-        long localId = generateId();
-        User localUser = user.toBuilder().id(localId).build();
-
-        users.put(localId, localUser);
-        return localUser;
+        return inMemoryUserStorage.create(user);
     }
 
-    public User updateUserService(UserRequest userRequest) {
+    public User updateUser(UserRequest userRequest) {
         User user = UserMapper.mapUserFromDto(userRequest);
 
-        if (!users.containsKey(user.getId())) {
-            throw new IllegalStateException("Пользователя с данным id не существует");
-        }
-
-        users.put(user.getId(), user);
-        return user;
+        return inMemoryUserStorage.update(user);
     }
 
-    private long generateId() {
-        return id++;
+    public User addFriend(long id, long friendId) {
+        return inMemoryUserStorage.addFriend(id, friendId);
+    }
+
+    public User removeFriend(long id, long friendId) {
+        return inMemoryUserStorage.removeFriend(id, friendId);
+    }
+
+    public List<User> getFriends(long id) {
+        return inMemoryUserStorage.getFriends(id);
+    }
+
+    public List<User> getIntersectionFriends(long id, long otherId) {
+        return inMemoryUserStorage.getIntersectionFriends(id, otherId);
+    }
+
+    public void isUserIdExists(long id) {
+        inMemoryUserStorage.isIdExists(id);
     }
 }
