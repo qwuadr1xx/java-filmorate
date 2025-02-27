@@ -12,9 +12,9 @@ import java.util.List;
 public class DbMpaStorage implements MpaStorage {
     private final JdbcTemplate jdbcTemplate;
 
-    private final static String GET_ALL_MPA_RATINGS = "SELECT * FROM mpa_ratings GROUP BY id ORDER BY id";
+    private static final String GET_ALL_MPA_RATINGS = "SELECT * FROM mpa_ratings GROUP BY id ORDER BY id";
 
-    private final static String GET_MPA_RATING_BY_ID = "SELECT * FROM mpa_ratings WHERE id = ?";
+    private static final String GET_MPA_RATING_BY_ID = "SELECT * FROM mpa_ratings WHERE id = ?";
 
     @Autowired
     public DbMpaStorage(JdbcTemplate jdbcTemplate) {
