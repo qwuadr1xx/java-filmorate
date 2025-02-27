@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.exception;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -23,6 +24,15 @@ public class ErrorHandler {
         return new ErrorResponse(
                 e.getError(),
                 String.format("Ошибка с сущностью %s", e.getEntity())
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleEmptyResultDataAccess(final EmptyResultDataAccessException e) {
+        return new ErrorResponse(
+                e.getMessage(),
+                "Несуществующая сущность"
         );
     }
 }
