@@ -43,7 +43,8 @@ public class FilmService {
         return dbFilmStorage.update(film);
     }
 
-    public void addLike(long id, long userId) {validateId(id);
+    public void addLike(long id, long userId) {
+        validateId(id);
         validateId(id);
         validateId(userId);
 
