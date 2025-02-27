@@ -20,28 +20,28 @@ public class DbUserStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final static String CREATE_USER = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
+    private static final String CREATE_USER = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
 
-    private final static String SELECT_ALL_USERS = "SELECT * FROM users";
+    private static final String SELECT_ALL_USERS = "SELECT * FROM users";
 
-    private final static String SELECT_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
+    private static final String SELECT_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
 
-    private final static String UPDATE_USER = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
+    private static final String UPDATE_USER = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
 
-    private final static String ADD_FRIEND = "INSERT INTO friendship(user_id, friend_id) VALUES (?, ?)";
+    private static final String ADD_FRIEND = "INSERT INTO friendship(user_id, friend_id) VALUES (?, ?)";
 
-    private final static String GET_FRIEND_PAIR = "SELECT * FROM friendship WHERE user_id = ? AND friend_id = ?";
+    private static final String GET_FRIEND_PAIR = "SELECT * FROM friendship WHERE user_id = ? AND friend_id = ?";
 
-    private final static String GET_FRIEND_STATUS = "SELECT friend_status FROM friendship WHERE user_id = ? AND friend_id = ?";
+    private static final String GET_FRIEND_STATUS = "SELECT friend_status FROM friendship WHERE user_id = ? AND friend_id = ?";
 
-    private final static String UPDATE_FRIEND_STATUS = "UPDATE friendship SET friend_status = ? WHERE user_id = ? AND friend_id = ?";
+    private static final String UPDATE_FRIEND_STATUS = "UPDATE friendship SET friend_status = ? WHERE user_id = ? AND friend_id = ?";
 
-    private final static String REMOVE_FRIEND = "DELETE FROM friendship WHERE user_id = ? AND friend_id = ?";
+    private static final String REMOVE_FRIEND = "DELETE FROM friendship WHERE user_id = ? AND friend_id = ?";
 
-    private final static String GET_USERS_FRIENDS = "SELECT * FROM users AS u " +
+    private static final String GET_USERS_FRIENDS = "SELECT * FROM users AS u " +
             "WHERE u.id IN (SELECT friend_id FROM friendship WHERE user_id = ?)";
 
-    private final static String GET_INTERSECTION_FRIENDS = "SELECT u.* FROM users AS u " +
+    private static final String GET_INTERSECTION_FRIENDS = "SELECT u.* FROM users AS u " +
             "JOIN friendship AS f1 ON u.id = f1.friend_id " +
             "JOIN friendship AS f2 ON u.id = f2.friend_id " +
             "WHERE f1.user_id = ? AND f2.user_id = ?";
