@@ -1,3 +1,8 @@
+DELETE
+FROM MPA_RATINGS;
+DELETE
+FROM GENRES;
+
 INSERT INTO genres (name) VALUES ('Комедия');
 INSERT INTO genres (name) VALUES ('Драма');
 INSERT INTO genres (name) VALUES ('Мультфильм');
