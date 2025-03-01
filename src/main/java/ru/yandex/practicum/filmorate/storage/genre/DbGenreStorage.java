@@ -12,7 +12,7 @@ import java.util.List;
 public class DbGenreStorage implements GenreStorage {
     private final JdbcTemplate jdbcTemplate;
 
-    private static final String GET_ALL_GENRES = "SELECT * FROM genres GROUP BY id ORDER BY id";
+    private static final String GET_ALL_GENRES = "SELECT * FROM genres ORDER BY id";
 
     private static final String GET_GENRE_BY_ID = "SELECT * FROM genres WHERE id = ?";
 

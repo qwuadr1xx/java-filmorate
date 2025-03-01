@@ -26,13 +26,19 @@ public class DbFilmStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
     private static final String CREATE_FILM = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)";
+
     private static final String SELECT_ALL_FILMS = "SELECT f.id, f.name, f.description, f.duration, f.release_date, f.mpa_rating_id, m.name AS mpa_rating_name " +
             "FROM films AS f " +
             "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id";
+
     private static final String SELECT_FILM_BY_ID = SELECT_ALL_FILMS + " WHERE f.id = ?";
+
     private static final String UPDATE_FILM = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ? WHERE id = ?";
+
     private static final String ADD_LIKE = "INSERT INTO likes(film_id, user_id) VALUES (?, ?)";
+
     private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+
     private static final String GET_LIKED_FILMS = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
             "FROM films AS f " +
             "INNER JOIN likes AS l ON f.id = l.film_id " +
@@ -40,6 +46,7 @@ public class DbFilmStorage implements FilmStorage {
             "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
             "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
+
     private static final String GET_GENRES_BY_FILM_ID = "SELECT g.id, g.name " +
             "FROM genres AS g " +
             "INNER JOIN film_genres AS fg ON g.id = fg.genre_id " +
@@ -82,6 +89,7 @@ public class DbFilmStorage implements FilmStorage {
         checkMpaExists(film.getMpa().getId());
         checkGenresExist(film.getGenres());
         KeyHolder keyHolder = new GeneratedKeyHolder();
+
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(CREATE_FILM, new String[]{"id"});
             stmt.setString(1, film.getName());
@@ -91,6 +99,7 @@ public class DbFilmStorage implements FilmStorage {
             stmt.setLong(5, film.getMpa().getId());
             return stmt;
         }, keyHolder);
+
         Film createdFilm = film.toBuilder()
                 .id(keyHolder.getKey().longValue())
                 .build();
@@ -105,6 +114,7 @@ public class DbFilmStorage implements FilmStorage {
         getById(film.getId());
         checkMpaExists(film.getMpa().getId());
         checkGenresExist(film.getGenres());
+
         log.debug("Обновление фильма: {}", film);
         jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getDescription(), film.getReleaseDate(),
                 film.getDuration(), film.getMpa().getId(), film.getId());
