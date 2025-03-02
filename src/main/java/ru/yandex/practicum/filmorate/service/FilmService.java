@@ -1,54 +1,61 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.FilmMapper;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.exception.BadRequestException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class FilmService {
-    private final FilmStorage inMemoryFilmStorage;
-    private final UserService userService;
+    private final FilmStorage dbFilmStorage;
+
+    @Autowired
+    public FilmService(DbFilmStorage dbFilmStorage) {
+        this.dbFilmStorage = dbFilmStorage;
+    }
 
     public List<Film> getFilms() {
-        return new ArrayList<>(inMemoryFilmStorage.getAll());
+        return dbFilmStorage.getAll();
     }
 
     public Film getFilmById(long id) {
-        return inMemoryFilmStorage.getById(id).orElseThrow(() -> new NotFoundException(id, Entity.FILM));
+        validateId(id);
+
+        return dbFilmStorage.getById(id);
     }
 
     public Film createFilm(FilmRequest filmRequest) {
         Film film = FilmMapper.mapFilmFromDto(filmRequest);
 
-        return inMemoryFilmStorage.create(film);
+        return dbFilmStorage.create(film);
     }
 
     public Film updateFilm(FilmRequest filmRequest) {
         Film film = FilmMapper.mapFilmFromDto(filmRequest);
 
-        return inMemoryFilmStorage.update(film);
+        return dbFilmStorage.update(film);
     }
 
     public void addLike(long id, long userId) {
-        userService.isUserIdExists(userId);
+        validateId(id);
+        validateId(id);
+        validateId(userId);
 
-        inMemoryFilmStorage.addLike(id, userId);
+        dbFilmStorage.addLike(id, userId);
     }
 
     public void removeLike(long id, long userId) {
-        userService.isUserIdExists(userId);
+        validateId(id);
+        validateId(userId);
 
-        inMemoryFilmStorage.removeLike(id, userId);
+        dbFilmStorage.removeLike(id, userId);
     }
 
     public List<Film> getPopularFilms(int count) {
@@ -58,6 +65,14 @@ public class FilmService {
             throw new BadRequestException("Значение count не может быть равным нулю", Entity.FILM);
         }
 
-        return new ArrayList<>(inMemoryFilmStorage.getLikedFilms().subList(0, Integer.min(inMemoryFilmStorage.getLikedFilms().size(), count)));
+        return dbFilmStorage.getLikedFilms(count);
+    }
+
+    private static void validateId(long id) {
+        if (id < 0) {
+            throw new BadRequestException("id не может быть отрицательным", Entity.FILM);
+        } else if (id == 0) {
+            throw new BadRequestException("id не может быть равным нулю", Entity.FILM);
+        }
     }
 }
