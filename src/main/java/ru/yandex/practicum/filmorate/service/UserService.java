@@ -7,7 +7,10 @@ import ru.yandex.practicum.filmorate.dto.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.exception.BadRequestException;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
 import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -17,10 +20,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserStorage dbUserStorage;
+    private final FeedStorage dbFeedStorage;
 
     @Autowired
-    public UserService(DbUserStorage dbUserStorage) {
+    public UserService(DbUserStorage dbUserStorage, DbFeedStorage dbFeedStorage) {
         this.dbUserStorage = dbUserStorage;
+        this.dbFeedStorage = dbFeedStorage;
     }
 
     public List<User> getUsers() {
@@ -31,6 +36,12 @@ public class UserService {
         validateId(id);
 
         return dbUserStorage.getById(id);
+    }
+
+    public FeedRecord getFeedRecord(long id) {
+        validateId(id);
+
+        return dbFeedStorage.getRecord(id);
     }
 
     public User createUser(UserRequest userRequest) {
