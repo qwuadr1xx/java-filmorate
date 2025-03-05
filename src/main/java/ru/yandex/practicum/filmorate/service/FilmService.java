@@ -58,14 +58,14 @@ public class FilmService {
         dbFilmStorage.removeLike(id, userId);
     }
 
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         if (count < 0) {
             throw new BadRequestException("Значение count не может быть отрицательным", Entity.FILM);
         } else if (count == 0) {
             throw new BadRequestException("Значение count не может быть равным нулю", Entity.FILM);
         }
 
-        return dbFilmStorage.getLikedFilms(count);
+        return dbFilmStorage.getPopularFilms(count, genreId, year);
     }
 
     private static void validateId(long id) {

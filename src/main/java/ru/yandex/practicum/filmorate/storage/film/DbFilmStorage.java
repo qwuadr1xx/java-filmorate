@@ -39,12 +39,18 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
-    private static final String GET_LIKED_FILMS = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
-            "FROM films AS f " +
-            "INNER JOIN likes AS l ON f.id = l.film_id " +
-            "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id " +
-            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
-            "ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+    private static final String GET_LIKED_FILMS = """
+           SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
+           FROM films AS f
+           INNER JOIN likes AS l ON f.id = l.film_id
+           INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id
+           """;
+
+    private static final String GET_LIKED_FILMS_GROUP_AND_SORT = """
+           GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name
+           ORDER BY COUNT(l.user_id) DESC LIMIT ?
+           """;
+
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
 
     private static final String GET_GENRES_BY_FILM_ID = "SELECT g.id, g.name " +
@@ -142,9 +148,26 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getLikedFilms(int limit) {
+    public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
         log.debug("Получение топ-{} фильмов по лайкам", limit);
-        List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS, mapRowToFilm(), limit);
+
+        List<Object> args = new ArrayList<>();
+
+        String joinsForQuery = "";
+        if (genreId != null) {
+            joinsForQuery = "JOIN film_genres fg ON f.id = fg.film_id and fg.genre_id = ? ";
+            args.add(genreId);
+        }
+
+        String whereForQuery = "";
+        if (year != null) {
+            whereForQuery = "WHERE EXTRACT(YEAR FROM (f.release_date)) = ? ";
+            args.add(year);
+        }
+
+        args.add(limit);
+
+        List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS + joinsForQuery + whereForQuery + GET_LIKED_FILMS_GROUP_AND_SORT, mapRowToFilm(), args.toArray());
         films = films.stream()
                 .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())
                 .collect(Collectors.toList());
