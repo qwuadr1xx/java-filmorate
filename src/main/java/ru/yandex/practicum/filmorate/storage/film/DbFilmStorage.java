@@ -185,9 +185,9 @@ public class DbFilmStorage implements FilmStorage {
     public void deleteById(long id) {
         log.debug("Удаление фильма с id {}", id);
 
-        jdbcTemplate.update(DELETE_FILM, id);
         jdbcTemplate.update(DELETE_LIKES_BY_FILM, id);
         jdbcTemplate.update(DELETE_GENRES_BY_FILM, id);
+        jdbcTemplate.update(DELETE_FILM, id);
 
         log.info("Фильм {} удален", id);
     }

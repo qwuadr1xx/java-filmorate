@@ -143,9 +143,9 @@ public class DbUserStorage implements UserStorage {
     public void deleteById(long id) {
         log.debug("Удаление пользователя с id: {}", id);
 
-        jdbcTemplate.update(DELETE_USER, id);
-        jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
         jdbcTemplate.update(DELETE_FRIEND_FROM_FRIENDSHIP, id);
+        jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
+        jdbcTemplate.update(DELETE_USER, id);
 
         log.info("Пользователь {} удален", id);
     }
