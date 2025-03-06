@@ -58,10 +58,10 @@ public class FilmService {
         dbFilmStorage.removeLike(id, userId);
     }
 
-    public Film deleteFilm(long id) {
+    public void deleteFilm(long id) {
         validateId(id);
 
-        return dbFilmStorage.deleteById(id);
+        dbFilmStorage.deleteById(id);
     }
 
     public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {

@@ -83,10 +83,10 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public User deleteUser(@PathVariable final long userId) {
+    public void deleteUser(@PathVariable final long userId) {
         log.info("Удаление пользователя");
 
-        return userService.deleteUser(userId);
+        userService.deleteUser(userId);
     }
 
 }

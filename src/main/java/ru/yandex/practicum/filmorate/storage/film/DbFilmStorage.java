@@ -182,16 +182,14 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film deleteById(long id) {
+    public void deleteById(long id) {
         log.debug("Удаление фильма с id {}", id);
-        Film film = getById(id);
 
         jdbcTemplate.update(DELETE_FILM, id);
         jdbcTemplate.update(DELETE_LIKES_BY_FILM, id);
         jdbcTemplate.update(DELETE_GENRES_BY_FILM, id);
 
-        log.info("Фильм {} удален", film);
-        return film;
+        log.info("Фильм {} удален", id);
     }
 
     private static RowMapper<Film> mapRowToFilm() {

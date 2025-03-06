@@ -140,16 +140,14 @@ public class DbUserStorage implements UserStorage {
     }
 
     @Override
-    public User deleteById(long id) {
+    public void deleteById(long id) {
         log.debug("Удаление пользователя с id: {}", id);
-        User user = getById(id);
 
         jdbcTemplate.update(DELETE_USER, id);
         jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
         jdbcTemplate.update(DELETE_FRIEND_FROM_FRIENDSHIP, id);
 
-        log.info("Пользователь {} удален", user);
-        return user;
+        log.info("Пользователь {} удален", id);
     }
 
     private static RowMapper<User> mapRowToUser() {

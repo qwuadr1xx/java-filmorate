@@ -52,10 +52,10 @@ public class UserService {
         return dbUserStorage.addFriend(id, friendId);
     }
 
-    public User deleteUser(long id) {
+    public void deleteUser(long id) {
         validateId(id);
 
-        return dbUserStorage.deleteById(id);
+        dbUserStorage.deleteById(id);
     }
 
     public User removeFriend(long id, long friendId) {
