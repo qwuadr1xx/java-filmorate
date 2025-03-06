@@ -35,6 +35,8 @@ public class DbUserStorage implements UserStorage {
 
     private static final String DELETE_USER_FROM_FRIENDSHIP = "DELETE FROM friendship WHERE user_id = ?";
 
+    private static final String DELETE_LIKE_BY_USER = "DELETE FROM likes WHERE user_id = ?";
+
     private static final String DELETE_FRIEND_FROM_FRIENDSHIP = "DELETE FROM friendship WHERE friend_id = ?";
 
     private static final String GET_USERS_FRIENDS = "SELECT * FROM users AS u " +
@@ -143,6 +145,7 @@ public class DbUserStorage implements UserStorage {
     public void deleteById(long id) {
         log.debug("Удаление пользователя с id: {}", id);
 
+        jdbcTemplate.update(DELETE_LIKE_BY_USER, id);
         jdbcTemplate.update(DELETE_FRIEND_FROM_FRIENDSHIP, id);
         jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
         jdbcTemplate.update(DELETE_USER, id);
