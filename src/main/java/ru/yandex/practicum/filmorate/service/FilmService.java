@@ -45,7 +45,6 @@ public class FilmService {
 
     public void addLike(long id, long userId) {
         validateId(id);
-        validateId(id);
         validateId(userId);
 
         dbFilmStorage.addLike(id, userId);
@@ -74,5 +73,9 @@ public class FilmService {
         } else if (id == 0) {
             throw new BadRequestException("id не может быть равным нулю", Entity.FILM);
         }
+    }
+
+    public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
+        return dbFilmStorage.getFilmsByDirectorWithSort(directorId, sortBy);
     }
 }
