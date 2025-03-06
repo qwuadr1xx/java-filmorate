@@ -10,4 +10,6 @@ public interface Storage<T> {
     T getById(long id);
 
     List<T> getAll();
+
+    T deleteById(long id);
 }
