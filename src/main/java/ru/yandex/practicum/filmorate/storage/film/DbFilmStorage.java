@@ -49,7 +49,7 @@ public class DbFilmStorage implements FilmStorage {
     private static final String GET_LIKED_FILMS = """
             SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
             FROM films AS f
-            INNER JOIN likes AS l ON f.id = l.film_id
+            LEFT JOIN likes AS l ON f.id = l.film_id
             LEFT JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id
             """;
 
