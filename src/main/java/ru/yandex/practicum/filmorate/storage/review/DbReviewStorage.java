@@ -47,7 +47,9 @@ public class DbReviewStorage implements ReviewStorage {
         log.info("Выполняется запрос: {}", CREATE_REVIEW);
         checkUserExists(review.getUserId());
         checkFilmExists(review.getFilmId());
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
+
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(CREATE_REVIEW, new String[]{"review_id"});
             ps.setString(1, review.getContent());
@@ -78,9 +80,11 @@ public class DbReviewStorage implements ReviewStorage {
 
         if (filmId == null) {
             log.info("Выполняется запрос: {}", SELECT_ALL_REVIEWS);
+
             return jdbcTemplate.query(SELECT_ALL_REVIEWS, new Object[]{limit}, new ReviewRowMapper());
         } else {
             log.info("Выполняется запрос: {}", SELECT_REVIEWS_BY_FILM_ID);
+
             return jdbcTemplate.query(SELECT_REVIEWS_BY_FILM_ID, new Object[]{filmId, limit}, new ReviewRowMapper());
         }
     }
@@ -89,7 +93,9 @@ public class DbReviewStorage implements ReviewStorage {
     public Review updateReview(Review review) {
         log.info("Выполняется запрос: {}", UPDATE_REVIEW);
         getReviewById(review.getReviewId());
+
         jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
+
         return review;
     }
 
@@ -97,6 +103,7 @@ public class DbReviewStorage implements ReviewStorage {
     public void deleteReviewById(Integer reviewId) {
         log.info("Выполняется запрос: {}", DELETE_REVIEW_BY_ID);
         getReviewById(reviewId);
+
         jdbcTemplate.update(DELETE_REVIEW_BY_ID, reviewId);
     }
 
@@ -106,6 +113,7 @@ public class DbReviewStorage implements ReviewStorage {
         getReviewById(reviewId);
         checkUserExists(userId);
         deleteDislikeReview(reviewId, userId);
+
         jdbcTemplate.update(LIKE_REVIEW, reviewId, userId, true);
         jdbcTemplate.update(U_UPDATE_INCREASE_SQL_QUERY, reviewId);
     }
@@ -116,6 +124,7 @@ public class DbReviewStorage implements ReviewStorage {
         getReviewById(reviewId);
         checkUserExists(userId);
         deleteLikeReview(reviewId, userId);
+
         jdbcTemplate.update(LIKE_REVIEW, reviewId, userId, false);
         jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
     }
@@ -125,6 +134,7 @@ public class DbReviewStorage implements ReviewStorage {
         log.info("Выполняется запрос: {}", DELETE_LIKE);
         getReviewById(reviewId);
         checkUserExists(userId);
+
         int update = jdbcTemplate.update(DELETE_LIKE, reviewId, userId);
         if (update == 1) {
             jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
@@ -136,6 +146,7 @@ public class DbReviewStorage implements ReviewStorage {
         log.info("Выполняется запрос: {}", DELETE_DISLIKE);
         getReviewById(reviewId);
         checkUserExists(userId);
+
         int update = jdbcTemplate.update(DELETE_DISLIKE, reviewId, userId);
         if (update == 1) {
             jdbcTemplate.update(U_UPDATE_INCREASE_SQL_QUERY, reviewId);
