@@ -33,7 +33,7 @@ public class DirectorService {
     }
 
     public void deleteDirector(Long id) {
-        directorStorage.delete(id);
+        directorStorage.deleteById(id);
     }
 
     public void deleteDirector(Director director) {
