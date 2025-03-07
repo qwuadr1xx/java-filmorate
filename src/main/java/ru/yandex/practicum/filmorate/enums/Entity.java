@@ -5,5 +5,6 @@ public enum Entity {
     USER,
     MPA_RATING,
     GENRE,
-    DIRECTOR
+    DIRECTOR,
+    REVIEW
 }
