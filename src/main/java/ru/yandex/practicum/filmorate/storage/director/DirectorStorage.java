@@ -5,7 +5,5 @@ import ru.yandex.practicum.filmorate.storage.Storage;
 
 public interface DirectorStorage extends Storage<Director> {
 
-    void delete(Long id);
-
     void delete(Director director);
 }

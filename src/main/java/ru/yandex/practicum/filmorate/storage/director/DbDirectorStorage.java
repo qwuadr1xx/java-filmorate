@@ -79,7 +79,7 @@ public class DbDirectorStorage implements DirectorStorage {
         return director;
     }
 
-    public void delete(Long id) {
+    public void deleteById(long id) {
         log.debug("Удаление режиссера с id: {}", id);
         getById(id);
 
@@ -87,7 +87,7 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     public void delete(Director director) {
-        delete(director.getId());
+        deleteById(director.getId());
     }
 
     private static RowMapper<Director> mapRowToDirector() {

@@ -40,17 +40,23 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
+    private static final String DELETE_FILM = "DELETE FROM films WHERE id = ?";
+
+    private static final String DELETE_LIKES_BY_FILM = "DELETE FROM likes WHERE film_id = ?";
+
+    private static final String DELETE_GENRES_BY_FILM = "DELETE FROM film_genres WHERE film_id = ?";
+
     private static final String GET_LIKED_FILMS = """
-           SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
-           FROM films AS f
-           INNER JOIN likes AS l ON f.id = l.film_id
-           INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id
-           """;
+            SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
+            FROM films AS f
+            LEFT JOIN likes AS l ON f.id = l.film_id
+            LEFT JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id
+            """;
 
     private static final String GET_LIKED_FILMS_GROUP_AND_SORT = """
-           GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name
-           ORDER BY COUNT(l.user_id) DESC LIMIT ?
-           """;
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name
+            ORDER BY COUNT(l.user_id) DESC LIMIT ?
+            """;
 
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
 
@@ -224,6 +230,17 @@ public class DbFilmStorage implements FilmStorage {
                         .directors(getDirectorsForFilm(film.getId()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteById(long id) {
+        log.debug("Удаление фильма с id {}", id);
+
+        jdbcTemplate.update(DELETE_LIKES_BY_FILM, id);
+        jdbcTemplate.update(DELETE_GENRES_BY_FILM, id);
+        jdbcTemplate.update(DELETE_FILM, id);
+
+        log.info("Фильм {} удален", id);
     }
 
     private static RowMapper<Film> mapRowToFilm() {

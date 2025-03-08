@@ -57,6 +57,12 @@ public class FilmService {
         dbFilmStorage.removeLike(id, userId);
     }
 
+    public void deleteFilm(long id) {
+        validateId(id);
+
+        dbFilmStorage.deleteById(id);
+    }
+
     public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         if (count < 0) {
             throw new BadRequestException("Значение count не может быть отрицательным", Entity.FILM);
