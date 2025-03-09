@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.yandex.practicum.filmorate.dto.UserRequest;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -89,4 +90,9 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getUsersRecommendations(@PathVariable final long id) {
+        log.info("Получение рекомендаций фильмов для пользователя с id {}", id);
+        return userService.getUsersRecommendations(id);
+    }
 }
