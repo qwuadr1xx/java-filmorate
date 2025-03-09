@@ -125,7 +125,6 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public void deleteReviewById(Integer reviewId) {
         log.info("Выполняется запрос: {}", DELETE_REVIEW_BY_ID);
-        getReviewById(reviewId);
 
         jdbcTemplate.update(DELETE_REVIEW_BY_ID, reviewId);
         dbFeedStorage.setRecord(FeedRecord.builder()
