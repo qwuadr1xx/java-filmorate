@@ -16,7 +16,7 @@ import ru.yandex.practicum.filmorate.model.FeedRecord;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -37,7 +37,7 @@ public class DbFeedStorage implements FeedStorage {
         List<FeedRecord> feedRecordList;
 
         try {
-            feedRecordList = jdbcTemplate.query("SELECT * FROM feed WHERE user_id = ? ORDER BY timestamp DESC", mapRowToFeedRecord(), id);
+            feedRecordList = jdbcTemplate.query("SELECT * FROM feed WHERE user_id = ?", mapRowToFeedRecord(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(id, Entity.FEED);
         }
@@ -53,7 +53,7 @@ public class DbFeedStorage implements FeedStorage {
 
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(CREATE_FEED, new String[]{"event_id"});
-            stmt.setTimestamp(1, Timestamp.from(feedRecord.getTimestamp().toInstant(ZoneOffset.UTC)));
+            stmt.setTimestamp(1, Timestamp.from(Instant.ofEpochMilli(feedRecord.getTimestamp())));
             stmt.setLong(2, feedRecord.getUserId());
             stmt.setString(3, feedRecord.getEventType().toString());
             stmt.setString(4, feedRecord.getOperation().toString());
@@ -69,7 +69,7 @@ public class DbFeedStorage implements FeedStorage {
 
     private static RowMapper<FeedRecord> mapRowToFeedRecord() {
         return (rs, rowNum) -> FeedRecord.builder()
-                .timestamp(rs.getTimestamp("timestamp").toLocalDateTime())
+                .timestamp(rs.getTimestamp("timestamp").toInstant().toEpochMilli())
                 .userId(rs.getLong("user_id"))
                 .eventType(EventType.valueOf(rs.getString("event_type")))
                 .operation(Operation.valueOf(rs.getString("operation")))

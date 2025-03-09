@@ -18,7 +18,7 @@ import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -169,7 +169,7 @@ public class DbFilmStorage implements FilmStorage {
         jdbcTemplate.update(ADD_LIKE, id, userId);
         log.info("Лайк добавлен: фильм id {} от пользователя id {}", id, userId);
         dbFeedStorage.setRecord(FeedRecord.builder()
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(Instant.now().toEpochMilli())
                         .userId(userId)
                         .eventType(EventType.LIKE)
                         .operation(Operation.ADD)
@@ -185,7 +185,7 @@ public class DbFilmStorage implements FilmStorage {
         jdbcTemplate.update(DELETE_LIKE, id, userId);
         log.info("Лайк удалён: фильм id {} от пользователя id {}", id, userId);
         dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now().toEpochMilli())
                 .userId(userId)
                 .eventType(EventType.LIKE)
                 .operation(Operation.REMOVE)

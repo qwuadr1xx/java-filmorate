@@ -20,7 +20,7 @@ import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -71,7 +71,7 @@ public class DbReviewStorage implements ReviewStorage {
 
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).intValue());
         dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now().toEpochMilli())
                 .userId((long) review.getUserId())
                 .eventType(EventType.REVIEW)
                 .operation(Operation.ADD)
@@ -113,7 +113,7 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
 
         dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now().toEpochMilli())
                 .userId((long) review.getUserId())
                 .eventType(EventType.REVIEW)
                 .operation(Operation.UPDATE)
@@ -126,14 +126,18 @@ public class DbReviewStorage implements ReviewStorage {
     public void deleteReviewById(Integer reviewId) {
         log.info("Выполняется запрос: {}", DELETE_REVIEW_BY_ID);
 
-        jdbcTemplate.update(DELETE_REVIEW_BY_ID, reviewId);
-        dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
-                .userId(jdbcTemplate.queryForObject("SELECT user_id FROM reviews WHERE review_id = ?", long.class, reviewId))
-                .eventType(EventType.REVIEW)
-                .operation(Operation.REMOVE)
-                .entityId((long) reviewId)
-                .build());
+        try {
+            getReviewById(reviewId);
+            dbFeedStorage.setRecord(FeedRecord.builder()
+                    .timestamp(Instant.now().toEpochMilli())
+                    .userId(jdbcTemplate.queryForObject("SELECT user_id FROM reviews WHERE review_id = ?", long.class, reviewId))
+                    .eventType(EventType.REVIEW)
+                    .operation(Operation.REMOVE)
+                    .entityId((long) reviewId)
+                    .build());
+        } finally {
+            jdbcTemplate.update(DELETE_REVIEW_BY_ID, reviewId);
+        }
     }
 
     @Override

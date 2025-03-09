@@ -16,7 +16,7 @@ import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -117,7 +117,7 @@ public class DbUserStorage implements UserStorage {
 
         jdbcTemplate.update(ADD_FRIEND, id, friendId);
         dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now().toEpochMilli())
                 .userId(id)
                 .eventType(EventType.FRIEND)
                 .operation(Operation.ADD)
@@ -134,7 +134,7 @@ public class DbUserStorage implements UserStorage {
 
         jdbcTemplate.update(REMOVE_FRIEND, id, friendId);
         dbFeedStorage.setRecord(FeedRecord.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now().toEpochMilli())
                 .userId(id)
                 .eventType(EventType.FRIEND)
                 .operation(Operation.REMOVE)
