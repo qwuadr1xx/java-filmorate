@@ -8,9 +8,10 @@ import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.exception.BadRequestException;
 import ru.yandex.practicum.filmorate.model.FeedRecord;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
-import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -20,12 +21,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserStorage dbUserStorage;
-    private final FeedStorage dbFeedStorage;
+    private final FilmStorage filmStorage;
+    private final FeedStorage dbFeedStorage; // Добавляем FeedStorage
 
     @Autowired
-    public UserService(DbUserStorage dbUserStorage, DbFeedStorage dbFeedStorage) {
+    public UserService(DbUserStorage dbUserStorage, FilmStorage filmStorage, FeedStorage dbFeedStorage) {
         this.dbUserStorage = dbUserStorage;
-        this.dbFeedStorage = dbFeedStorage;
+        this.filmStorage = filmStorage;
+        this.dbFeedStorage = dbFeedStorage; // Инициализация FeedStorage
+    }
+
+    public List<Film> getUsersRecommendations(long userId) {
+        validateId(userId);
+        List<Long> userFilms = filmStorage.getFilmsUserById(userId);
+        List<Long> recommendedFilmIds = filmStorage.getUsersRecommendations(userId);
+        recommendedFilmIds.removeAll(userFilms);
+        return filmStorage.getFilmsByIds(recommendedFilmIds);
     }
 
     public List<User> getUsers() {

@@ -74,10 +74,56 @@ public class DbFilmStorage implements FilmStorage {
             "INNER JOIN film_director AS fd ON d.id = fd.director_id " +
             "WHERE fd.film_id = ?";
 
+    private static final String GET_FILMS_BY_USER_ID = "SELECT film_id FROM likes WHERE user_id = ?";
+
+    private static final String GET_USERS_RECOMMENDATIONS = """
+        SELECT l.film_id
+        FROM likes l
+        WHERE l.user_id IN (
+            SELECT l2.user_id
+            FROM likes l1
+            JOIN likes l2 ON l1.film_id = l2.film_id
+            WHERE l1.user_id = ? AND l2.user_id != ?
+        )
+        AND l.film_id NOT IN (
+            SELECT film_id
+            FROM likes
+            WHERE user_id = ?
+        )
+        GROUP BY l.film_id
+        ORDER BY COUNT(l.user_id) DESC
+        """;
+
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.dbFeedStorage = dbFeedStorage;
+    }
+
+    @Override
+    public List<Long> getFilmsUserById(long userId) {
+        return jdbcTemplate.query(GET_FILMS_BY_USER_ID, (rs, rowNum) -> rs.getLong("film_id"), userId);
+    }
+
+    @Override
+    public List<Long> getUsersRecommendations(long userId) {
+        return jdbcTemplate.query(
+                GET_USERS_RECOMMENDATIONS,
+                (rs, rowNum) -> rs.getLong("film_id"),
+                userId, userId, userId
+        );
+    }
+
+    @Override
+    public List<Film> getFilmsByIds(List<Long> filmIds) {
+        if (filmIds.isEmpty()) {
+            return List.of();
+        }
+        String sql = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
+                "FROM films AS f " +
+                "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id " +
+                "WHERE f.id IN (" + String.join(",", Collections.nCopies(filmIds.size(), "?")) + ")";
+        return jdbcTemplate.query(sql, mapRowToFilm(), filmIds.toArray());
     }
 
     @Override
