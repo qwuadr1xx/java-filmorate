@@ -9,12 +9,18 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.enums.Entity;
+import ru.yandex.practicum.filmorate.enums.EventType;
+import ru.yandex.practicum.filmorate.enums.Operation;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,6 +30,8 @@ import java.util.Optional;
 public class DbReviewStorage implements ReviewStorage {
 
     private final JdbcTemplate jdbcTemplate;
+
+    private final FeedStorage dbFeedStorage;
 
     private static final String CREATE_REVIEW = "INSERT INTO REVIEWS (content, is_positive, user_id, film_id, useful) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_REVIEW_BY_ID = "SELECT * FROM REVIEWS WHERE review_id = ?";
@@ -38,8 +46,9 @@ public class DbReviewStorage implements ReviewStorage {
     private static final String U_UPDATE_INCREASE_SQL_QUERY = "UPDATE REVIEWS SET useful = useful + 1 WHERE review_id = ?";
 
     @Autowired
-    public DbReviewStorage(JdbcTemplate jdbcTemplate) {
+    public DbReviewStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dbFeedStorage = dbFeedStorage;
     }
 
     @Override
@@ -61,6 +70,13 @@ public class DbReviewStorage implements ReviewStorage {
         }, keyHolder);
 
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).intValue());
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(LocalDateTime.now())
+                .userId((long) review.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.ADD)
+                .entityId((long) review.getReviewId())
+                .build());
         return review;
     }
 
@@ -96,6 +112,13 @@ public class DbReviewStorage implements ReviewStorage {
 
         jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
 
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(LocalDateTime.now())
+                .userId((long) review.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.UPDATE)
+                .entityId((long) review.getReviewId())
+                .build());
         return review;
     }
 
@@ -105,6 +128,13 @@ public class DbReviewStorage implements ReviewStorage {
         getReviewById(reviewId);
 
         jdbcTemplate.update(DELETE_REVIEW_BY_ID, reviewId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(LocalDateTime.now())
+                .userId(jdbcTemplate.queryForObject("SELECT user_id FROM reviews WHERE review_id = ?", long.class, reviewId))
+                .eventType(EventType.REVIEW)
+                .operation(Operation.REMOVE)
+                .entityId((long) reviewId)
+                .build());
     }
 
     @Override

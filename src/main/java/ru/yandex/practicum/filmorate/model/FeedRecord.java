@@ -5,12 +5,12 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.enums.EventType;
 import ru.yandex.practicum.filmorate.enums.Operation;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Builder(toBuilder = true)
 @Data
 public class FeedRecord {
-    private final Timestamp timestamp;
+    private final LocalDateTime timestamp;
 
     private final Long userId;
 

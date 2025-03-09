@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/feed")
-    public FeedRecord getFeedRecord(@PathVariable final long id) {
+    public List<FeedRecord> getFeedRecord(@PathVariable final long id) {
         log.info("Получение последней записи с id: {}", id);
 
         return userService.getFeedRecord(id);

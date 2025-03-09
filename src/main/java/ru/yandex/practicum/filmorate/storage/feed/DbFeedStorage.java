@@ -15,6 +15,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.FeedRecord;
 
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.time.ZoneOffset;
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -29,18 +32,18 @@ public class DbFeedStorage implements FeedStorage {
     }
 
     @Override
-    public FeedRecord getRecord(long id) {
+    public List<FeedRecord> getRecord(long id) {
         log.debug("Получение записи с id: {}", id);
-        FeedRecord feedRecord;
+        List<FeedRecord> feedRecordList;
 
         try {
-            feedRecord = jdbcTemplate.queryForObject("SELECT 1 FROM feed WHERE user_id = ?", mapRowToFeedRecord(), id);
+            feedRecordList = jdbcTemplate.query("SELECT * FROM feed WHERE user_id = ? ORDER BY timestamp DESC", mapRowToFeedRecord(), id);
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(id, Entity.FEED);
         }
 
-        log.info("Получение записи: {}", feedRecord);
-        return feedRecord;
+        log.info("Получение записи: {}", feedRecordList);
+        return feedRecordList;
     }
 
     @Override
@@ -49,8 +52,8 @@ public class DbFeedStorage implements FeedStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(CREATE_FEED, new String[]{"eventId"});
-            stmt.setTimestamp(1, feedRecord.getTimestamp());
+            PreparedStatement stmt = connection.prepareStatement(CREATE_FEED, new String[]{"event_id"});
+            stmt.setTimestamp(1, Timestamp.from(feedRecord.getTimestamp().toInstant(ZoneOffset.UTC)));
             stmt.setLong(2, feedRecord.getUserId());
             stmt.setString(3, feedRecord.getEventType().toString());
             stmt.setString(4, feedRecord.getOperation().toString());
@@ -66,7 +69,7 @@ public class DbFeedStorage implements FeedStorage {
 
     private static RowMapper<FeedRecord> mapRowToFeedRecord() {
         return (rs, rowNum) -> FeedRecord.builder()
-                .timestamp(rs.getTimestamp("timestamp"))
+                .timestamp(rs.getTimestamp("timestamp").toLocalDateTime())
                 .userId(rs.getLong("user_id"))
                 .eventType(EventType.valueOf(rs.getString("event_type")))
                 .operation(Operation.valueOf(rs.getString("operation")))

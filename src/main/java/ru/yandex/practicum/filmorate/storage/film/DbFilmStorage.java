@@ -9,14 +9,16 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.enums.Entity;
+import ru.yandex.practicum.filmorate.enums.EventType;
+import ru.yandex.practicum.filmorate.enums.Operation;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 public class DbFilmStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
+
+    private final FeedStorage dbFeedStorage;
 
     private static final String CREATE_FILM = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)";
 
@@ -71,8 +75,9 @@ public class DbFilmStorage implements FilmStorage {
             "WHERE fd.film_id = ?";
 
     @Autowired
-    public DbFilmStorage(JdbcTemplate jdbcTemplate) {
+    public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dbFeedStorage = dbFeedStorage;
     }
 
     @Override
@@ -163,6 +168,13 @@ public class DbFilmStorage implements FilmStorage {
         log.debug("Добавление лайка: фильм id {} от пользователя id {}", id, userId);
         jdbcTemplate.update(ADD_LIKE, id, userId);
         log.info("Лайк добавлен: фильм id {} от пользователя id {}", id, userId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                        .timestamp(LocalDateTime.now())
+                        .userId(userId)
+                        .eventType(EventType.LIKE)
+                        .operation(Operation.ADD)
+                        .entityId(id)
+                        .build());
     }
 
     @Override
@@ -172,6 +184,13 @@ public class DbFilmStorage implements FilmStorage {
         log.debug("Удаление лайка: фильм id {} от пользователя id {}", id, userId);
         jdbcTemplate.update(DELETE_LIKE, id, userId);
         log.info("Лайк удалён: фильм id {} от пользователя id {}", id, userId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(LocalDateTime.now())
+                .userId(userId)
+                .eventType(EventType.LIKE)
+                .operation(Operation.REMOVE)
+                .entityId(id)
+                .build());
     }
 
     @Override

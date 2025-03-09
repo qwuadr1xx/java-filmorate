@@ -38,7 +38,7 @@ public class UserService {
         return dbUserStorage.getById(id);
     }
 
-    public FeedRecord getFeedRecord(long id) {
+    public List<FeedRecord> getFeedRecord(long id) {
         validateId(id);
 
         return dbFeedStorage.getRecord(id);
