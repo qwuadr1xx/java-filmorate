@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.yandex.practicum.filmorate.dto.UserRequest;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -52,6 +53,13 @@ public class UserController {
         log.info("Получение пересечения друзей");
 
         return userService.getIntersectionFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<FeedRecord> getFeedRecord(@PathVariable final long id) {
+        log.info("Получение последней записи с id: {}", id);
+
+        return userService.getFeedRecord(id);
     }
 
     @PostMapping

@@ -7,10 +7,16 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.enums.EventType;
+import ru.yandex.practicum.filmorate.enums.Operation;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -18,6 +24,8 @@ import java.util.List;
 public class DbUserStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
+
+    private final FeedStorage dbFeedStorage;
 
     private static final String CREATE_USER = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
 
@@ -48,8 +56,9 @@ public class DbUserStorage implements UserStorage {
             "WHERE f1.user_id = ? AND f2.user_id = ?";
 
     @Autowired
-    public DbUserStorage(JdbcTemplate jdbcTemplate) {
+    public DbUserStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dbFeedStorage = dbFeedStorage;
     }
 
     @Override
@@ -107,6 +116,13 @@ public class DbUserStorage implements UserStorage {
         log.debug("Пользователь с id {} добавляет в друзья пользователя с id {}", id, friendId);
 
         jdbcTemplate.update(ADD_FRIEND, id, friendId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(id)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.ADD)
+                .entityId(friendId)
+                .build());
         return friend;
     }
 
@@ -117,6 +133,13 @@ public class DbUserStorage implements UserStorage {
         log.debug("Пользователь с id {} удаляет из друзей пользователя с id {}", id, friendId);
 
         jdbcTemplate.update(REMOVE_FRIEND, id, friendId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(id)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.REMOVE)
+                .entityId(friendId)
+                .build());
         return friend;
     }
 
