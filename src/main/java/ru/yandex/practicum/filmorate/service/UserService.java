@@ -63,6 +63,12 @@ public class UserService {
         return dbUserStorage.addFriend(id, friendId);
     }
 
+    public void deleteUser(long id) {
+        validateId(id);
+
+        dbUserStorage.deleteById(id);
+    }
+
     public User removeFriend(long id, long friendId) {
         return dbUserStorage.removeFriend(id, friendId);
     }

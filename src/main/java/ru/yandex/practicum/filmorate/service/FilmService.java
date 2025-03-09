@@ -45,7 +45,6 @@ public class FilmService {
 
     public void addLike(long id, long userId) {
         validateId(id);
-        validateId(id);
         validateId(userId);
 
         dbFilmStorage.addLike(id, userId);
@@ -58,14 +57,20 @@ public class FilmService {
         dbFilmStorage.removeLike(id, userId);
     }
 
-    public List<Film> getPopularFilms(int count) {
+    public void deleteFilm(long id) {
+        validateId(id);
+
+        dbFilmStorage.deleteById(id);
+    }
+
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         if (count < 0) {
             throw new BadRequestException("Значение count не может быть отрицательным", Entity.FILM);
         } else if (count == 0) {
             throw new BadRequestException("Значение count не может быть равным нулю", Entity.FILM);
         }
 
-        return dbFilmStorage.getLikedFilms(count);
+        return dbFilmStorage.getPopularFilms(count, genreId, year);
     }
 
     private static void validateId(long id) {
@@ -74,5 +79,9 @@ public class FilmService {
         } else if (id == 0) {
             throw new BadRequestException("id не может быть равным нулю", Entity.FILM);
         }
+    }
+
+    public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
+        return dbFilmStorage.getFilmsByDirectorWithSort(directorId, sortBy);
     }
 }
