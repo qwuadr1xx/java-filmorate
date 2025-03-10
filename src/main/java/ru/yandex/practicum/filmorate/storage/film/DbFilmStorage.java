@@ -16,7 +16,11 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -221,5 +225,31 @@ public class DbFilmStorage implements FilmStorage {
                 }
             }
         }
+    }
+
+    @Override
+    public List<Film> commonFilmsList(Long userId, Long friendId) {
+        log.info("Получение общих фильмов для userId={} и friendId={}", userId, friendId);
+
+        checkIsUserExist(userId);
+        checkIsUserExist(friendId);
+
+        String sql = """
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
+                FROM films f
+                JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
+                JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
+                JOIN mpa_ratings m ON f.mpa_rating_id = m.id
+                ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.film_id = f.id) DESC
+                """;
+
+        List<Film> commonFilms = jdbcTemplate.query(sql, mapRowToFilm(), userId, friendId);
+
+        commonFilms = commonFilms.stream()
+                .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())
+                .collect(Collectors.toList());
+
+        log.info("Найдено {} общих фильмов", commonFilms.size());
+        return commonFilms;
     }
 }
