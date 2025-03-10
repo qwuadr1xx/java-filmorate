@@ -37,53 +37,53 @@ public class DbFilmStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
     private final FeedStorage dbFeedStorage;
-
+    
     private static final String CREATE_FILM = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)" ;
 
     private static final String SELECT_ALL_FILMS = "SELECT f.id, f.name, f.description, f.duration, f.release_date, f.mpa_rating_id, m.name AS mpa_rating_name " +
             "FROM films AS f " +
             "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id" ;
-
+    
     private static final String SELECT_FILM_BY_ID = SELECT_ALL_FILMS + " WHERE f.id = ?" ;
-
+    
     private static final String UPDATE_FILM = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ? WHERE id = ?" ;
-
+    
     private static final String ADD_LIKE = "INSERT INTO likes(film_id, user_id) VALUES (?, ?)" ;
-
+    
     private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?" ;
-
+    
     private static final String DELETE_FILM = "DELETE FROM films WHERE id = ?" ;
-
+    
     private static final String DELETE_LIKES_BY_FILM = "DELETE FROM likes WHERE film_id = ?" ;
-
+    
     private static final String DELETE_GENRES_BY_FILM = "DELETE FROM film_genres WHERE film_id = ?" ;
-
+    
     private static final String GET_LIKED_FILMS = """
             SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
             FROM films AS f
             LEFT JOIN likes AS l ON f.id = l.film_id
             LEFT JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id
             """;
-
+    
     private static final String GET_LIKED_FILMS_GROUP_AND_SORT = """
             GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name
             ORDER BY COUNT(l.user_id) DESC LIMIT ?
             """;
-
+    
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?" ;
-
+    
     private static final String GET_GENRES_BY_FILM_ID = "SELECT g.id, g.name " +
             "FROM genres AS g " +
             "INNER JOIN film_genres AS fg ON g.id = fg.genre_id " +
             "WHERE fg.film_id = ?" ;
-
+    
     private static final String GET_DIRECTORS_BY_FILM_ID = "SELECT d.id, d.name " +
             "FROM directors AS d " +
             "INNER JOIN film_director AS fd ON d.id = fd.director_id " +
             "WHERE fd.film_id = ?" ;
-
+    
     private static final String GET_FILMS_BY_USER_ID = "SELECT film_id FROM likes WHERE user_id = ?" ;
-
+    
     private static final String GET_USERS_RECOMMENDATIONS = """
             SELECT l.film_id
             FROM likes l
@@ -101,25 +101,25 @@ public class DbFilmStorage implements FilmStorage {
             GROUP BY l.film_id
             ORDER BY COUNT(l.user_id) DESC
             """;
-
+    
     private static final String GET_COMMON_FILMS_LIST = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
             "FROM films AS f " +
             "JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ? " +
             "JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ? " +
             "JOIN mpa_ratings m ON f.mpa_rating_id = m.id " +
             "ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.film_id = f.id) DESC" ;
-
+    
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.dbFeedStorage = dbFeedStorage;
     }
-
+    
     @Override
     public List<Long> getFilmsUserById(long userId) {
         return jdbcTemplate.query(GET_FILMS_BY_USER_ID, (rs, rowNum) -> rs.getLong("film_id"), userId);
     }
-
+    
     @Override
     public List<Long> getUsersRecommendations(long userId) {
         return jdbcTemplate.query(
@@ -128,7 +128,7 @@ public class DbFilmStorage implements FilmStorage {
                 userId, userId, userId
         );
     }
-
+    
     @Override
     public List<Film> getFilmsByIds(List<Long> filmIds) {
         if (filmIds.isEmpty()) {
@@ -140,7 +140,7 @@ public class DbFilmStorage implements FilmStorage {
                 "WHERE f.id IN (" + String.join(",", Collections.nCopies(filmIds.size(), "?")) + ")" ;
         return jdbcTemplate.query(sql, mapRowToFilm(), filmIds.toArray());
     }
-
+    
     @Override
     public List<Film> getAll() {
         log.debug("Получение всех фильмов из базы данных");
@@ -154,7 +154,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Получено {} фильмов", films.size());
         return films;
     }
-
+    
     @Override
     public Film getById(long id) {
         log.debug("Получение фильма с id: {}", id);
@@ -171,7 +171,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Получен фильм: {}", film);
         return film;
     }
-
+    
     @Override
     public Film create(Film film) {
         log.debug("Создание фильма: {}", film);
@@ -204,7 +204,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Фильм создан: {}", createdFilm);
         return createdFilm;
     }
-
+    
     @Override
     public Film update(Film film) {
         getById(film.getId());
@@ -221,7 +221,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Фильм обновлён с id: {}", film.getId());
         return film;
     }
-
+    
     @Override
     public void addLike(long id, long userId) {
         getById(id);
@@ -237,7 +237,7 @@ public class DbFilmStorage implements FilmStorage {
                 .entityId(id)
                 .build());
     }
-
+    
     @Override
     public void removeLike(long id, long userId) {
         getById(id);
@@ -253,7 +253,7 @@ public class DbFilmStorage implements FilmStorage {
                 .entityId(id)
                 .build());
     }
-
+    
     @Override
     public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
         log.debug("Получение топ-{} фильмов по лайкам", limit);
@@ -281,7 +281,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Получено {} фильмов", films.size());
         return films;
     }
-
+    
     @Override
     public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
 
@@ -311,7 +311,7 @@ public class DbFilmStorage implements FilmStorage {
                         .build())
                 .collect(Collectors.toList());
     }
-
+    
     @Override
     public void deleteById(long id) {
         log.debug("Удаление фильма с id {}", id);
@@ -322,7 +322,7 @@ public class DbFilmStorage implements FilmStorage {
 
         log.info("Фильм {} удален", id);
     }
-
+    
     private static RowMapper<Film> mapRowToFilm() {
         return (rs, rowNum) ->
                 Film.builder()
@@ -338,7 +338,7 @@ public class DbFilmStorage implements FilmStorage {
                         .genres(Collections.emptySet())
                         .build();
     }
-
+    
     private Set<Genre> getGenresForFilm(long filmId) {
         List<Genre> genreList = jdbcTemplate.query(
                 GET_GENRES_BY_FILM_ID,
@@ -350,7 +350,7 @@ public class DbFilmStorage implements FilmStorage {
         return genreList.stream()
                 .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Genre::getId))));
     }
-
+    
     private void updateGenres(Set<Genre> genres, long filmId) {
         jdbcTemplate.update("DELETE FROM film_genres WHERE film_id = ?", filmId);
         if (genres != null && !genres.isEmpty()) {
@@ -363,7 +363,7 @@ public class DbFilmStorage implements FilmStorage {
             jdbcTemplate.batchUpdate(sql, batchArgs);
         }
     }
-
+    
     private Set<Director> getDirectorsForFilm(long filmId) {
         List<Director> directorList = jdbcTemplate.query(
                 GET_DIRECTORS_BY_FILM_ID,
@@ -375,7 +375,7 @@ public class DbFilmStorage implements FilmStorage {
         return directorList.stream()
                 .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Director::getId))));
     }
-
+    
     private void updateFilmDirectors(Set<Director> directors, long filmId) {
         jdbcTemplate.update("DELETE FROM film_director WHERE film_id = ?", filmId);
         if (directors != null && !directors.isEmpty()) {
@@ -388,7 +388,7 @@ public class DbFilmStorage implements FilmStorage {
             jdbcTemplate.batchUpdate(sql, batchArgs);
         }
     }
-
+    
     private void checkIsUserExist(long userId) {
         log.debug("Проверка существования пользователя с id: {}", userId);
         try {
@@ -398,7 +398,7 @@ public class DbFilmStorage implements FilmStorage {
             throw new NotFoundException(userId, Entity.USER);
         }
     }
-
+    
     private void checkMpaExists(long mpaId) {
         try {
             jdbcTemplate.queryForObject("SELECT 1 FROM mpa_ratings WHERE id = ?", Integer.class, mpaId);
@@ -406,7 +406,7 @@ public class DbFilmStorage implements FilmStorage {
             throw new NotFoundException(mpaId, Entity.MPA_RATING);
         }
     }
-
+    
     private void checkGenresExist(Set<Genre> genres) {
         if (genres != null) {
             for (Genre genre : genres) {
@@ -418,7 +418,7 @@ public class DbFilmStorage implements FilmStorage {
             }
         }
     }
-
+    
     @Override
     public List<Film> commonFilmsList(Long userId, Long friendId) {
         log.info("Получение общих фильмов для userId={} и friendId={}", userId, friendId);
@@ -435,7 +435,7 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Найдено {} общих фильмов", commonFilms.size());
         return commonFilms;
     }
-
+    
     private void checkDirectorsExist(Set<Director> directors) {
         if (directors != null) {
             for (Director director : directors) {
