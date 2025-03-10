@@ -9,16 +9,20 @@ import ru.yandex.practicum.filmorate.exception.BadRequestException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.DbUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
 
 @Service
 public class FilmService {
     private final FilmStorage dbFilmStorage;
+    private final UserStorage dbUserStorage;
 
     @Autowired
-    public FilmService(DbFilmStorage dbFilmStorage) {
+    public FilmService(DbFilmStorage dbFilmStorage, DbUserStorage dbUserStorage) {
         this.dbFilmStorage = dbFilmStorage;
+        this.dbUserStorage = dbUserStorage;
     }
 
     public List<Film> getFilms() {
@@ -81,7 +85,16 @@ public class FilmService {
         }
     }
 
+    public List<Film> commonFilmsList(Long userId, Long friendId) {
+        if (dbUserStorage.getById(userId) == null || dbUserStorage.getById(friendId) == null) {
+            throw new BadRequestException("Один из пользователей не зарегестрирован", Entity.USER);
+        } else {
+            return dbFilmStorage.commonFilmsList(userId, friendId);
+        }
+    }
+
     public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
         return dbFilmStorage.getFilmsByDirectorWithSort(directorId, sortBy);
+
     }
 }
