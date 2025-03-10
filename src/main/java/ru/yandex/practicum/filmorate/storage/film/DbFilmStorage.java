@@ -70,7 +70,7 @@ public class DbFilmStorage implements FilmStorage {
             ORDER BY COUNT(l.user_id) DESC LIMIT ?
             """;
 
-    private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?" ;
+    private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
 
     private static final String GET_GENRES_BY_FILM_ID = "SELECT g.id, g.name " +
             "FROM genres AS g " +
@@ -260,13 +260,13 @@ public class DbFilmStorage implements FilmStorage {
 
         List<Object> args = new ArrayList<>();
 
-        String joinsForQuery = "" ;
+        String joinsForQuery = "";
         if (genreId != null) {
             joinsForQuery = "JOIN film_genres fg ON f.id = fg.film_id and fg.genre_id = ? ";
             args.add(genreId);
         }
 
-        String whereForQuery = "" ;
+        String whereForQuery = "";
         if (year != null) {
             whereForQuery = "WHERE EXTRACT(YEAR FROM (f.release_date)) = ? ";
             args.add(year);
@@ -291,11 +291,11 @@ public class DbFilmStorage implements FilmStorage {
         String orderByForQuery = "";
         switch (sortBy) {
             case "year":
-                orderByForQuery = "ORDER BY f.release_date " ;
+                orderByForQuery = "ORDER BY f.release_date ";
                 break;
             case "likes":
                 joinsForQuery += "JOIN likes l ON f.id = l.film_id ";
-                groupByForQuery = "GROUP BY f.id " ;
+                groupByForQuery = "GROUP BY f.id ";
                 orderByForQuery = "ORDER BY COUNT(l.user_id) DESC ";
                 break;
         }
