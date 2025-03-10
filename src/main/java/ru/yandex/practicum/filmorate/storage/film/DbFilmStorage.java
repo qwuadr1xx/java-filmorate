@@ -56,6 +56,13 @@ public class DbFilmStorage implements FilmStorage {
             "INNER JOIN film_genres AS fg ON g.id = fg.genre_id " +
             "WHERE fg.film_id = ?";
 
+    private static final String GET_COMMON_FILMS_LIST = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
+            "FROM films AS f " +
+            "JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ? " +
+            "JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ? " +
+            "JOIN mpa_ratings m ON f.mpa_rating_id = m.id " +
+            "ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.film_id = f.id) DESC";
+
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -145,17 +152,6 @@ public class DbFilmStorage implements FilmStorage {
         log.info("Лайк удалён: фильм id {} от пользователя id {}", id, userId);
     }
 
-    @Override
-    public List<Film> getLikedFilms(int limit) {
-        log.debug("Получение топ-{} фильмов по лайкам", limit);
-        List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS, mapRowToFilm(), limit);
-        films = films.stream()
-                .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())
-                .collect(Collectors.toList());
-        log.info("Получено {} фильмов", films.size());
-        return films;
-    }
-
     private static RowMapper<Film> mapRowToFilm() {
         return (rs, rowNum) ->
                 Film.builder()
@@ -234,16 +230,7 @@ public class DbFilmStorage implements FilmStorage {
         checkIsUserExist(userId);
         checkIsUserExist(friendId);
 
-        String sql = """
-                SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name
-                FROM films f
-                JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
-                JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
-                JOIN mpa_ratings m ON f.mpa_rating_id = m.id
-                ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.film_id = f.id) DESC
-                """;
-
-        List<Film> commonFilms = jdbcTemplate.query(sql, mapRowToFilm(), userId, friendId);
+        List<Film> commonFilms = jdbcTemplate.query(GET_COMMON_FILMS_LIST, mapRowToFilm(), userId, friendId);
 
         commonFilms = commonFilms.stream()
                 .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())

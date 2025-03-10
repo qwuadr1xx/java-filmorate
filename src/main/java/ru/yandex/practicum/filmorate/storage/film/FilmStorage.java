@@ -10,7 +10,5 @@ public interface FilmStorage extends Storage<Film> {
 
     void removeLike(long id, long userId);
 
-    List<Film> getLikedFilms(int limit);
-
     List<Film> commonFilmsList(Long userId, Long friendId);
 }
