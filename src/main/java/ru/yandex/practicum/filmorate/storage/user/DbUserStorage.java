@@ -2,16 +2,21 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.enums.EventType;
+import ru.yandex.practicum.filmorate.enums.Operation;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -19,6 +24,8 @@ import java.util.List;
 public class DbUserStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
+
+    private final FeedStorage dbFeedStorage;
 
     private static final String CREATE_USER = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
 
@@ -30,13 +37,15 @@ public class DbUserStorage implements UserStorage {
 
     private static final String ADD_FRIEND = "INSERT INTO friendship(user_id, friend_id) VALUES (?, ?)";
 
-    private static final String GET_FRIEND_PAIR = "SELECT * FROM friendship WHERE user_id = ? AND friend_id = ?";
-
-    private static final String GET_FRIEND_STATUS = "SELECT friend_status FROM friendship WHERE user_id = ? AND friend_id = ?";
-
-    private static final String UPDATE_FRIEND_STATUS = "UPDATE friendship SET friend_status = ? WHERE user_id = ? AND friend_id = ?";
-
     private static final String REMOVE_FRIEND = "DELETE FROM friendship WHERE user_id = ? AND friend_id = ?";
+
+    private static final String DELETE_USER = "DELETE FROM users WHERE id = ?";
+
+    private static final String DELETE_USER_FROM_FRIENDSHIP = "DELETE FROM friendship WHERE user_id = ?";
+
+    private static final String DELETE_LIKE_BY_USER = "DELETE FROM likes WHERE user_id = ?";
+
+    private static final String DELETE_FRIEND_FROM_FRIENDSHIP = "DELETE FROM friendship WHERE friend_id = ?";
 
     private static final String GET_USERS_FRIENDS = "SELECT * FROM users AS u " +
             "WHERE u.id IN (SELECT friend_id FROM friendship WHERE user_id = ?)";
@@ -47,8 +56,9 @@ public class DbUserStorage implements UserStorage {
             "WHERE f1.user_id = ? AND f2.user_id = ?";
 
     @Autowired
-    public DbUserStorage(JdbcTemplate jdbcTemplate) {
+    public DbUserStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dbFeedStorage = dbFeedStorage;
     }
 
     @Override
@@ -106,6 +116,13 @@ public class DbUserStorage implements UserStorage {
         log.debug("Пользователь с id {} добавляет в друзья пользователя с id {}", id, friendId);
 
         jdbcTemplate.update(ADD_FRIEND, id, friendId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(id)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.ADD)
+                .entityId(friendId)
+                .build());
         return friend;
     }
 
@@ -116,6 +133,13 @@ public class DbUserStorage implements UserStorage {
         log.debug("Пользователь с id {} удаляет из друзей пользователя с id {}", id, friendId);
 
         jdbcTemplate.update(REMOVE_FRIEND, id, friendId);
+        dbFeedStorage.setRecord(FeedRecord.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .userId(id)
+                .eventType(EventType.FRIEND)
+                .operation(Operation.REMOVE)
+                .entityId(friendId)
+                .build());
         return friend;
     }
 
@@ -140,6 +164,18 @@ public class DbUserStorage implements UserStorage {
         return commonFriends;
     }
 
+    @Override
+    public void deleteById(long id) {
+        log.debug("Удаление пользователя с id: {}", id);
+
+        jdbcTemplate.update(DELETE_LIKE_BY_USER, id);
+        jdbcTemplate.update(DELETE_FRIEND_FROM_FRIENDSHIP, id);
+        jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
+        jdbcTemplate.update(DELETE_USER, id);
+
+        log.info("Пользователь {} удален", id);
+    }
+
     private static RowMapper<User> mapRowToUser() {
         return (rs, rowNum) ->
                 User.builder()
@@ -149,24 +185,5 @@ public class DbUserStorage implements UserStorage {
                         .name(rs.getString("name"))
                         .birthday(rs.getDate("birthday").toLocalDate())
                         .build();
-    }
-
-    private boolean isFriendshipExists(long userId, long friendId) {
-        log.debug("Проверка наличия записи дружбы между пользователем с id {} и другом с id {}", userId, friendId);
-        try {
-            jdbcTemplate.queryForObject(GET_FRIEND_PAIR, (rs, rowNum) -> 1, friendId, userId);
-            log.debug("Запись о дружбе существует между пользователем с id {} и другом с id {}", userId, friendId);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            log.debug("Запись о дружбе отсутствует между пользователем с id {} и другом с id {}", userId, friendId);
-            return false;
-        }
-    }
-
-    private boolean hasFriend(long userId, long friendId) {
-        log.debug("Проверка статуса дружбы (friend_status) между пользователем с id {} и другом с id {}", userId, friendId);
-        boolean status = jdbcTemplate.queryForObject(GET_FRIEND_STATUS, (rs, rowNum) -> rs.getBoolean("friend_status"), friendId, userId);
-        log.debug("Статус дружбы для пары ({}; {}): {}", userId, friendId, status);
-        return status;
     }
 }

@@ -40,10 +40,12 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false, defaultValue = "10") int count) {
-        log.info("Выведение популярных фильмов");
+    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false, defaultValue = "10") Integer count,
+                                      @RequestParam(value = "genreId", required = false) Integer genreId,
+                                      @RequestParam(value = "year", required = false) Integer year) {
+        log.info("Вывод популярных фильмов с фильтром по жанру и году");
 
-        return filmService.getPopularFilms(count);
+        return filmService.getPopularFilms(count, genreId, year);
     }
 
     @PostMapping
@@ -77,6 +79,22 @@ public class FilmController {
     @GetMapping("/common")
     public List<Film> commonFilmsList(@RequestParam Long userId, @RequestParam Long friendId) {
         log.info("Получен запрос GET /films/common?userId={}&friendId={}", userId, friendId);
+      
         return filmService.commonFilmsList(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable final int directorId, @RequestParam final String sortBy) {
+        log.info("Вывод фильмов режиссера {}", directorId);
+
+        return filmService.getFilmsByDirectorWithSort(directorId, sortBy);
+    }
+
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable final long filmId) {
+        log.info("Удаление фильма");
+
+        filmService.deleteFilm(filmId);
+
     }
 }

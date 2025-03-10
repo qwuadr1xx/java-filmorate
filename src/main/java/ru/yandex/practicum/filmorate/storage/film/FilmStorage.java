@@ -13,4 +13,15 @@ public interface FilmStorage extends Storage<Film> {
     List<Film> getLikedFilms(int limit);
 
     List<Film> commonFilmsList(Long userId, Long friendId);
+
+    List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year);
+
+    List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy);
+
+    List<Long> getUsersRecommendations(long userId); // Возвращает список ID фильмов для рекомендаций
+
+    List<Film> getFilmsByIds(List<Long> filmIds); // Возвращает список ID фильмов, которые пользователь уже оценил
+
+    List<Long> getFilmsUserById(long userId);
+
 }
