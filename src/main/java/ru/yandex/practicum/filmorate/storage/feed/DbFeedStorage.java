@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.feed;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -26,6 +25,8 @@ public class DbFeedStorage implements FeedStorage {
 
     private static final String CREATE_FEED = "INSERT INTO feed(timestamp, user_id, event_type, operation, entity_id) VALUES (?, ?, ?, ?, ?)";
 
+    private static final String GET_FEED_BY_ID = "SELECT * FROM feed WHERE user_id = ?";
+
     @Autowired
     public DbFeedStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -34,11 +35,9 @@ public class DbFeedStorage implements FeedStorage {
     @Override
     public List<FeedRecord> getRecord(long id) {
         log.debug("Получение записи с id: {}", id);
-        List<FeedRecord> feedRecordList;
+        List<FeedRecord> feedRecordList = jdbcTemplate.query(GET_FEED_BY_ID, mapRowToFeedRecord(), id);
 
-        try {
-            feedRecordList = jdbcTemplate.query("SELECT * FROM feed WHERE user_id = ?", mapRowToFeedRecord(), id);
-        } catch (EmptyResultDataAccessException e) {
+        if (feedRecordList.isEmpty()) {
             throw new NotFoundException(id, Entity.FEED);
         }
 
