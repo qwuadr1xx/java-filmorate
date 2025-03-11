@@ -22,4 +22,6 @@ public interface FilmStorage extends Storage<Film> {
 
     List<Long> getFilmsUserById(long userId);
 
+    List<Film> searchFilms(String query, String by, String sort);
 }
+

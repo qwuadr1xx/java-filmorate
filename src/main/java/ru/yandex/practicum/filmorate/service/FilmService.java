@@ -97,4 +97,12 @@ public class FilmService {
         return dbFilmStorage.getFilmsByDirectorWithSort(directorId, sortBy);
 
     }
+
+    public List<Film> searchFilms(String query, String by, String sort) {
+        if (!"year".equals(sort) && !"likes".equals(sort)) {
+            throw new BadRequestException("Некорректный параметр сортировки. Используйте 'year' или 'likes'.", Entity.FILM);
+        }
+        return dbFilmStorage.searchFilms(query, by, sort);
+    }
 }
+
