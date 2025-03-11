@@ -55,6 +55,8 @@ public class DbUserStorage implements UserStorage {
             "JOIN friendship AS f2 ON u.id = f2.friend_id " +
             "WHERE f1.user_id = ? AND f2.user_id = ?";
 
+    private static final String DELETE_USER_FROM_FEED = "DELETE FROM feed WHERE user_id = ?";
+
     @Autowired
     public DbUserStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
         this.jdbcTemplate = jdbcTemplate;
@@ -171,6 +173,7 @@ public class DbUserStorage implements UserStorage {
         jdbcTemplate.update(DELETE_LIKE_BY_USER, id);
         jdbcTemplate.update(DELETE_FRIEND_FROM_FRIENDSHIP, id);
         jdbcTemplate.update(DELETE_USER_FROM_FRIENDSHIP, id);
+        jdbcTemplate.update(DELETE_USER_FROM_FEED, id);
         jdbcTemplate.update(DELETE_USER, id);
 
         log.info("Пользователь {} удален", id);
