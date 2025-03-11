@@ -118,12 +118,11 @@ public class DbFilmStorage implements FilmStorage {
             "LEFT JOIN film_director fd ON f.id = fd.film_id " +
             "LEFT JOIN directors d ON fd.director_id = d.id " +
             "LEFT JOIN likes l ON f.id = l.film_id " +
-            "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ? " +
+            "WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?) " +
             "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
-            "ORDER BY\s " +
+            "ORDER BY " +
             "CASE WHEN ? = 'year' THEN f.release_date END DESC, " +
-            "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC " +
-            "\s ";
+            "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC";
 
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage, DirectorStorage directorStorage) {
@@ -301,7 +300,10 @@ public class DbFilmStorage implements FilmStorage {
 
         List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS + joinsForQuery + whereForQuery + GET_LIKED_FILMS_GROUP_AND_SORT + limitForQuery, mapRowToFilm(), args.toArray());
         films = films.stream()
-                .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())
+                .map(film -> film.toBuilder()
+                        .genres(getGenresForFilm(film.getId()))
+                        .directors(getDirectorsForFilm(film.getId()))
+                        .build())
                 .collect(Collectors.toList());
         log.info("Получено {} фильмов", films.size());
         return films;
