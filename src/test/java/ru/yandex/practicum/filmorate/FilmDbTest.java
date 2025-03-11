@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.DbFilmStorage;
+import ru.yandex.practicum.filmorate.storage.review.DbReviewStorage;
 
 import java.time.LocalDate;
 
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
 @AutoConfigureTestDatabase
-@Import({DbFilmStorage.class, DbFeedStorage.class})
+@Import({DbFilmStorage.class, DbFeedStorage.class, DbReviewStorage.class})
 class FilmDbTest {
 
     @Autowired
