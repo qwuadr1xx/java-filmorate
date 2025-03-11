@@ -117,9 +117,9 @@ public class DbFilmStorage implements FilmStorage {
             "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id " +
             "LEFT JOIN film_director fd ON f.id = fd.film_id " +
             "LEFT JOIN directors d ON fd.director_id = d.id " +
-            "LEFT JOIN likes l ON f.id = l.film_id " +
-            "WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?) " +
-            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
+            "LEFT JOIN likes l ON f.id = l.film_id ";
+
+    private static final String GET_SORT_FILMS_GROUP = "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
             "ORDER BY " +
             "CASE WHEN ? = 'year' THEN f.release_date END DESC, " +
             "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC";
@@ -154,7 +154,12 @@ public class DbFilmStorage implements FilmStorage {
                 "FROM films AS f " +
                 "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id " +
                 "WHERE f.id IN (" + String.join(",", Collections.nCopies(filmIds.size(), "?")) + ")";
-        return jdbcTemplate.query(sql, mapRowToFilm(), filmIds.toArray());
+        return jdbcTemplate.query(sql, mapRowToFilm(), filmIds.toArray()).stream()
+                .map(film -> film.toBuilder()
+                        .genres(getGenresForFilm(film.getId()))
+                        .directors(getDirectorsForFilm(film.getId()))
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -323,7 +328,7 @@ public class DbFilmStorage implements FilmStorage {
                 orderByForQuery = "ORDER BY f.release_date ";
                 break;
             case "likes":
-                joinsForQuery += "JOIN likes l ON f.id = l.film_id ";
+                joinsForQuery += "LEFT JOIN likes l ON f.id = l.film_id ";
                 groupByForQuery = "GROUP BY f.id ";
                 orderByForQuery = "ORDER BY COUNT(l.user_id) DESC ";
                 break;
@@ -492,18 +497,27 @@ public class DbFilmStorage implements FilmStorage {
         boolean searchByTitle = by.contains("title");
         boolean searchByDirector = by.contains("director");
 
-        String sqlQuery = GET_SORT_FILMS;
+        List<Object> args = new ArrayList<>();
+        String whereForQuery = "";
 
         List<Film> films;
         if (searchByTitle && searchByDirector) {
-            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+            whereForQuery = "WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?) ";
+            args.add(searchQuery);
+            args.add(searchQuery);
         } else if (searchByTitle) {
-            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+            whereForQuery = "WHERE LOWER(f.name) LIKE LOWER(?) ";
+            args.add(searchQuery);
         } else if (searchByDirector) {
-            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+            whereForQuery = "WHERE LOWER(d.name) LIKE LOWER(?) ";
+            args.add(searchQuery);
         } else {
             throw new IllegalArgumentException("Некорректный параметр 'by'. Используйте 'title', 'director' или 'title,director'.");
         }
+        args.add(sort);
+        args.add(sort);
+
+        films = jdbcTemplate.query(GET_SORT_FILMS + whereForQuery + GET_SORT_FILMS_GROUP, mapRowToFilm(), args.toArray());
 
         films = films.stream()
                 .map(film -> film.toBuilder()
