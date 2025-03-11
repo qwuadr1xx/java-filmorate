@@ -108,18 +108,21 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public Review updateReview(Review review) {
         log.info("Выполняется запрос: {}", UPDATE_REVIEW);
-        getReviewById(review.getReviewId());
+        Review existingReview = getReviewById(review.getReviewId());
 
-        jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
+        existingReview.setContent(review.getContent());
+        existingReview.setIsPositive(review.getIsPositive());
+
+        jdbcTemplate.update(UPDATE_REVIEW, existingReview.getContent(), existingReview.getIsPositive(), existingReview.getReviewId());
 
         dbFeedStorage.setRecord(FeedRecord.builder()
                 .timestamp(Instant.now().toEpochMilli())
-                .userId((long) review.getUserId())
+                .userId((long) existingReview.getUserId())
                 .eventType(EventType.REVIEW)
                 .operation(Operation.UPDATE)
-                .entityId((long) review.getReviewId())
+                .entityId((long) existingReview.getReviewId())
                 .build());
-        return review;
+        return existingReview;
     }
 
     @Override
