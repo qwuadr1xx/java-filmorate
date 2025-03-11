@@ -62,7 +62,7 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(CREATE_REVIEW, new String[]{"review_id"});
             ps.setString(1, review.getContent());
-            ps.setBoolean(2, review.getIsPositive());
+            ps.setBoolean(2, review.getIsPositive() != null ? review.getIsPositive() : false);
             ps.setInt(3, review.getUserId());
             ps.setInt(4, review.getFilmId());
             ps.setInt(5, review.getUseful());

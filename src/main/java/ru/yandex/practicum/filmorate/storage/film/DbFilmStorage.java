@@ -17,6 +17,7 @@ import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.feed.DbFeedStorage;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 
@@ -37,6 +38,7 @@ public class DbFilmStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
     private final FeedStorage dbFeedStorage;
+    private final DirectorStorage directorStorage;
 
     private static final String CREATE_FILM = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)";
 
@@ -48,7 +50,8 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String UPDATE_FILM = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ? WHERE id = ?";
 
-    private static final String ADD_LIKE = "INSERT INTO likes(film_id, user_id) VALUES (?, ?)";
+    private static final String ADD_LIKE = "INSERT INTO likes (film_id, user_id) " +
+            "SELECT ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE film_id = ? AND user_id = ?)";
 
     private static final String DELETE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
@@ -67,7 +70,7 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String GET_LIKED_FILMS_GROUP_AND_SORT = """
             GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name
-            ORDER BY COUNT(l.user_id) DESC LIMIT ?
+            ORDER BY COUNT(l.user_id) DESC
             """;
 
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE id = ?";
@@ -115,17 +118,17 @@ public class DbFilmStorage implements FilmStorage {
             "LEFT JOIN film_director fd ON f.id = fd.film_id " +
             "LEFT JOIN directors d ON fd.director_id = d.id " +
             "LEFT JOIN likes l ON f.id = l.film_id " +
-            "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ? " +
+            "WHERE LOWER(f.name) LIKE LOWER(?) OR LOWER(d.name) LIKE LOWER(?) " +
             "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
-            "ORDER BY\s " +
+            "ORDER BY " +
             "CASE WHEN ? = 'year' THEN f.release_date END DESC, " +
-            "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC " +
-            "\s ";
+            "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC";
 
     @Autowired
-    public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
+    public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage, DirectorStorage directorStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.dbFeedStorage = dbFeedStorage;
+        this.directorStorage = directorStorage;
     }
 
     @Override
@@ -207,7 +210,9 @@ public class DbFilmStorage implements FilmStorage {
                 .id(keyHolder.getKey().longValue())
                 .build();
 
-        updateGenres(createdFilm.getGenres(), createdFilm.getId());
+        if (film.getGenres() != null) {
+            updateGenres(createdFilm.getGenres(), createdFilm.getId());
+        }
         updateFilmDirectors(createdFilm.getDirectors(), createdFilm.getId());
 
         createdFilm = createdFilm.toBuilder()
@@ -228,7 +233,9 @@ public class DbFilmStorage implements FilmStorage {
         log.debug("Обновление фильма: {}", film);
         jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getDescription(), film.getReleaseDate(),
                 film.getDuration(), film.getMpa().getId(), film.getId());
-        updateGenres(film.getGenres(), film.getId());
+        if (film.getGenres() != null) {
+            updateGenres(film.getGenres(), film.getId());
+        }
         updateFilmDirectors(film.getDirectors(), film.getId());
 
         log.info("Фильм обновлён с id: {}", film.getId());
@@ -240,7 +247,7 @@ public class DbFilmStorage implements FilmStorage {
         getById(id);
         checkIsUserExist(userId);
         log.debug("Добавление лайка: фильм id {} от пользователя id {}", id, userId);
-        jdbcTemplate.update(ADD_LIKE, id, userId);
+        jdbcTemplate.update(ADD_LIKE, id, userId, id, userId);
         log.info("Лайк добавлен: фильм id {} от пользователя id {}", id, userId);
         dbFeedStorage.setRecord(FeedRecord.builder()
                 .timestamp(Instant.now().toEpochMilli())
@@ -275,7 +282,7 @@ public class DbFilmStorage implements FilmStorage {
 
         String joinsForQuery = "";
         if (genreId != null) {
-            joinsForQuery = "JOIN film_genres fg ON f.id = fg.film_id and fg.genre_id = ? ";
+            joinsForQuery = " JOIN film_genres fg ON f.id = fg.film_id and fg.genre_id = ? ";
             args.add(genreId);
         }
 
@@ -285,11 +292,18 @@ public class DbFilmStorage implements FilmStorage {
             args.add(year);
         }
 
-        args.add(limit);
+        String limitForQuery = "";
+        if (limit != null) {
+            limitForQuery = " LIMIT ?";
+            args.add(limit);
+        }
 
-        List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS + joinsForQuery + whereForQuery + GET_LIKED_FILMS_GROUP_AND_SORT, mapRowToFilm(), args.toArray());
+        List<Film> films = jdbcTemplate.query(GET_LIKED_FILMS + joinsForQuery + whereForQuery + GET_LIKED_FILMS_GROUP_AND_SORT + limitForQuery, mapRowToFilm(), args.toArray());
         films = films.stream()
-                .map(film -> film.toBuilder().genres(getGenresForFilm(film.getId())).build())
+                .map(film -> film.toBuilder()
+                        .genres(getGenresForFilm(film.getId()))
+                        .directors(getDirectorsForFilm(film.getId()))
+                        .build())
                 .collect(Collectors.toList());
         log.info("Получено {} фильмов", films.size());
         return films;
@@ -297,6 +311,8 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
+
+        directorStorage.getById(directorId);
 
         String joinsForQuery = "JOIN film_director fd on f.id = fd.film_id ";
         String whereForQuery = "WHERE fd.director_id = ? ";
@@ -348,11 +364,11 @@ public class DbFilmStorage implements FilmStorage {
                                 .id(rs.getLong("mpa_rating_id"))
                                 .name(rs.getString("mpa_rating_name"))
                                 .build())
-                        .genres(Collections.emptySet())
+                        .genres(Collections.emptyList())
                         .build();
     }
 
-    private Set<Genre> getGenresForFilm(long filmId) {
+    private List<Genre> getGenresForFilm(long filmId) {
         List<Genre> genreList = jdbcTemplate.query(
                 GET_GENRES_BY_FILM_ID,
                 (rs, rowNum) -> Genre.builder()
@@ -361,11 +377,13 @@ public class DbFilmStorage implements FilmStorage {
                         .build(),
                 filmId);
         return genreList.stream()
-                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Genre::getId))));
+                .sorted(Comparator.comparing(Genre::getId))
+                .collect(Collectors.toList());
     }
 
-    private void updateGenres(Set<Genre> genres, long filmId) {
+    private void updateGenres(List<Genre> genres, long filmId) {
         jdbcTemplate.update("DELETE FROM film_genres WHERE film_id = ?", filmId);
+
         if (genres != null && !genres.isEmpty()) {
             String sql = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
             Set<Genre> sortedGenres = genres.stream()
@@ -420,7 +438,7 @@ public class DbFilmStorage implements FilmStorage {
         }
     }
 
-    private void checkGenresExist(Set<Genre> genres) {
+    private void checkGenresExist(List<Genre> genres) {
         if (genres != null) {
             for (Genre genre : genres) {
                 try {
