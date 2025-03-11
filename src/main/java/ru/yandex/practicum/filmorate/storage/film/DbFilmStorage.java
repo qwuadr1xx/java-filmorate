@@ -42,7 +42,7 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String SELECT_ALL_FILMS = "SELECT f.id, f.name, f.description, f.duration, f.release_date, f.mpa_rating_id, m.name AS mpa_rating_name " +
             "FROM films AS f " +
-            "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id";
+            "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id ";
 
     private static final String SELECT_FILM_BY_ID = SELECT_ALL_FILMS + " WHERE f.id = ?";
 
@@ -108,6 +108,19 @@ public class DbFilmStorage implements FilmStorage {
             "JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ? " +
             "JOIN mpa_ratings m ON f.mpa_rating_id = m.id " +
             "ORDER BY (SELECT COUNT(*) FROM likes l WHERE l.film_id = f.id) DESC";
+
+    private static final String GET_SORT_FILMS = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name AS mpa_rating_name " +
+            "FROM films AS f " +
+            "INNER JOIN mpa_ratings AS m ON f.mpa_rating_id = m.id " +
+            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
+            "LEFT JOIN directors d ON fd.director_id = d.id " +
+            "LEFT JOIN likes l ON f.id = l.film_id " +
+            "WHERE LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ? " +
+            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpa_rating_id, m.name " +
+            "ORDER BY\s " +
+            "CASE WHEN ? = 'year' THEN f.release_date END DESC, " +
+            "CASE WHEN ? = 'likes' THEN COUNT(DISTINCT l.user_id) END DESC " +
+            "\s ";
 
     @Autowired
     public DbFilmStorage(JdbcTemplate jdbcTemplate, DbFeedStorage dbFeedStorage) {
@@ -446,5 +459,42 @@ public class DbFilmStorage implements FilmStorage {
                 }
             }
         }
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, String by, String sort) {
+        log.debug("Поиск фильмов по запросу: '{}', по параметрам: '{}', сортировка: '{}'", query, by, sort);
+
+        if (query == null || query.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String searchQuery = "%" + query.toLowerCase() + "%";
+
+        boolean searchByTitle = by.contains("title");
+        boolean searchByDirector = by.contains("director");
+
+        String sqlQuery = GET_SORT_FILMS;
+
+        List<Film> films;
+        if (searchByTitle && searchByDirector) {
+            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+        } else if (searchByTitle) {
+            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+        } else if (searchByDirector) {
+            films = jdbcTemplate.query(sqlQuery, mapRowToFilm(), searchQuery, searchQuery, sort, sort);
+        } else {
+            throw new IllegalArgumentException("Некорректный параметр 'by'. Используйте 'title', 'director' или 'title,director'.");
+        }
+
+        films = films.stream()
+                .map(film -> film.toBuilder()
+                        .genres(getGenresForFilm(film.getId()))
+                        .directors(getDirectorsForFilm(film.getId()))
+                        .build())
+                .collect(Collectors.toList());
+
+        log.info("Найдено {} фильмов по запросу: '{}'", films.size(), query);
+        return films;
     }
 }
