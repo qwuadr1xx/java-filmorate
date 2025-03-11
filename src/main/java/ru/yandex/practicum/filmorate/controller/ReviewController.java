@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +33,7 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Review createReview(@RequestBody Review review) {
+    public Review createReview(@RequestBody @Valid Review review) {
         log.info("Получил запрос на создание отзыва {}", review);
         Review createdReview = reviewService.createReview(review);
         try {

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
-import ru.yandex.practicum.filmorate.exception.BadRequestException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.FeedRecord;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -94,9 +94,9 @@ public class UserService {
 
     private static void validateId(long id) {
         if (id < 0) {
-            throw new BadRequestException("id не может быть отрицательным", Entity.USER);
+            throw new NotFoundException(id, Entity.USER);
         } else if (id == 0) {
-            throw new BadRequestException("id не может быть равным нулю", Entity.USER);
+            throw new NotFoundException(id, Entity.USER);
         }
     }
 }

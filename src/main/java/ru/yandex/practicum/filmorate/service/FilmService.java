@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.dto.FilmMapper;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.exception.BadRequestException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.DbFilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -44,7 +45,9 @@ public class FilmService {
     public Film updateFilm(FilmRequest filmRequest) {
         Film film = FilmMapper.mapFilmFromDto(filmRequest);
 
-        return dbFilmStorage.update(film);
+        Film updatedFilm = dbFilmStorage.update(film);
+        return updatedFilm;
+        //return dbFilmStorage.update(film);
     }
 
     public void addLike(long id, long userId) {
@@ -68,9 +71,9 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
-        if (count < 0) {
+        if (count != null && count < 0) {
             throw new BadRequestException("Значение count не может быть отрицательным", Entity.FILM);
-        } else if (count == 0) {
+        } else if (count != null && count == 0) {
             throw new BadRequestException("Значение count не может быть равным нулю", Entity.FILM);
         }
 
@@ -79,9 +82,9 @@ public class FilmService {
 
     private static void validateId(long id) {
         if (id < 0) {
-            throw new BadRequestException("id не может быть отрицательным", Entity.FILM);
+            throw new NotFoundException(id, Entity.FILM);
         } else if (id == 0) {
-            throw new BadRequestException("id не может быть равным нулю", Entity.FILM);
+            throw new NotFoundException(id, Entity.FILM);
         }
     }
 

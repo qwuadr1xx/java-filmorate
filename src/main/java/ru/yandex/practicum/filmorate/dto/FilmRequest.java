@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @Builder(toBuilder = true)
@@ -32,7 +33,7 @@ public class FilmRequest {
 
     private final Mpa mpa;
 
-    private final Set<Genre> genres;
+    private final List<Genre> genres;
 
     private final Set<Director> directors;
 }
