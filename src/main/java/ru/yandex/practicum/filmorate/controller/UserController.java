@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,7 +57,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/feed")
-    public List<FeedRecord> getFeedRecord(@PathVariable final long id) {
+    public List<FeedRecord> getFeedRecord(@PathVariable @Positive final long id) {
         log.info("Получение последней записи с id: {}", id);
 
         return userService.getFeedRecord(id);
