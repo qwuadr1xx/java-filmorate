@@ -96,7 +96,7 @@ public class FilmService {
         }
     }
 
-    public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
+    public List<Film> getFilmsByDirectorWithSort(Long directorId, String sortBy) {
         return dbFilmStorage.getFilmsByDirectorWithSort(directorId, sortBy);
 
     }

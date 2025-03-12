@@ -26,7 +26,7 @@ public class DirectorController {
     private final DirectorService directorService;
 
     @GetMapping
-    public List<Director> getDirectors() {
+    public List<Director> getAllDirectors() {
         return directorService.getDirectors();
     }
 

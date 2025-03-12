@@ -315,7 +315,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getFilmsByDirectorWithSort(int directorId, String sortBy) {
+    public List<Film> getFilmsByDirectorWithSort(Long directorId, String sortBy) {
 
         directorStorage.getById(directorId);
 
