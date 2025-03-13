@@ -86,6 +86,7 @@ public class DbReviewStorage implements ReviewStorage {
         try {
             return jdbcTemplate.queryForObject(SELECT_REVIEW_BY_ID, new Object[]{reviewId}, new ReviewRowMapper());
         } catch (EmptyResultDataAccessException e) {
+            log.error("Отзыв с id = {} не найден", reviewId);
             throw new NotFoundException(reviewId, Entity.REVIEW);
         }
     }
@@ -146,23 +147,55 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public void likeReview(Integer reviewId, Integer userId) {
         log.info("Выполняется запрос: {}", LIKE_REVIEW);
-        getReviewById(reviewId);
-        checkUserExists(userId);
-        deleteDislikeReview(reviewId, userId);
 
-        jdbcTemplate.update(LIKE_REVIEW, reviewId, userId, true);
-        jdbcTemplate.update(U_UPDATE_INCREASE_SQL_QUERY, reviewId);
+        Review review = getReviewById(reviewId);
+
+        checkUserExists(userId);
+
+        int deletedDislikes = jdbcTemplate.update(
+                "DELETE FROM REVIEWS_LIKES WHERE review_id = ? AND user_id = ? AND is_like = false",
+                reviewId, userId);
+
+        if (deletedDislikes > 0) {
+            jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
+        }
+
+        int insertedLikes = jdbcTemplate.update(
+                "INSERT INTO REVIEWS_LIKES (review_id, user_id, is_like) " +
+                        "SELECT ?, ?, true WHERE NOT EXISTS (" +
+                        "SELECT 1 FROM REVIEWS_LIKES WHERE review_id = ? AND user_id = ? AND is_like = true" +
+                        ")",
+                reviewId, userId, reviewId, userId);
+
+        if (insertedLikes > 0) {
+            jdbcTemplate.update(U_UPDATE_INCREASE_SQL_QUERY, reviewId);
+        }
     }
 
     @Override
     public void dislikeReview(Integer reviewId, Integer userId) {
         log.info("Выполняется запрос: {}", LIKE_REVIEW);
-        getReviewById(reviewId);
-        checkUserExists(userId);
-        deleteLikeReview(reviewId, userId);
 
-        jdbcTemplate.update(LIKE_REVIEW, reviewId, userId, false);
-        jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
+        Review review = getReviewById(reviewId);
+
+        checkUserExists(userId);
+
+        int deletedLikes = jdbcTemplate.update(
+                "DELETE FROM REVIEWS_LIKES WHERE review_id = ? AND user_id = ? AND is_like = true",
+                reviewId, userId);
+
+        if (deletedLikes > 0) {
+            jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
+        }
+        int insertedDislikes = jdbcTemplate.update(
+                "INSERT INTO REVIEWS_LIKES (review_id, user_id, is_like) " +
+                        "SELECT ?, ?, false WHERE NOT EXISTS (" +
+                        "SELECT 1 FROM REVIEWS_LIKES WHERE review_id = ? AND user_id = ? AND is_like = false" +
+                        ")",
+                reviewId, userId, reviewId, userId);
+        if (insertedDislikes > 0) {
+            jdbcTemplate.update(U_UPDATE_DECREASE_SQL_QUERY, reviewId);
+        }
     }
 
     @Override
