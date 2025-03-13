@@ -10,6 +10,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.enums.EventType;
+import ru.yandex.practicum.filmorate.enums.FilmSort;
 import ru.yandex.practicum.filmorate.enums.Operation;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -485,7 +486,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> searchFilms(String query, String by, String sort) {
+    public List<Film> searchFilms(String query, String by, FilmSort sort) {
         log.debug("Поиск фильмов по запросу: '{}', по параметрам: '{}', сортировка: '{}'", query, by, sort);
 
         if (query == null || query.trim().isEmpty()) {
@@ -514,8 +515,8 @@ public class DbFilmStorage implements FilmStorage {
         } else {
             throw new IllegalArgumentException("Некорректный параметр 'by'. Используйте 'title', 'director' или 'title,director'.");
         }
-        args.add(sort);
-        args.add(sort);
+        args.add(sort.toString());
+        args.add(sort.toString());
 
         films = jdbcTemplate.query(GET_SORT_FILMS + whereForQuery + GET_SORT_FILMS_GROUP, mapRowToFilm(), args.toArray());
 

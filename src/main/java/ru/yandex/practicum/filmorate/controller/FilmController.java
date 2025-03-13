@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
+import ru.yandex.practicum.filmorate.enums.FilmSort;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -101,7 +102,7 @@ public class FilmController {
     public List<Film> searchFilms(
             @RequestParam String query,
             @RequestParam(defaultValue = "title") String by,
-            @RequestParam(defaultValue = "likes") String sort) {
+            @RequestParam(defaultValue = "likes") FilmSort sort) {
         return filmService.searchFilms(query, by, sort);
     }
 }
