@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.enums.Entity;
 import ru.yandex.practicum.filmorate.enums.EventType;
 import ru.yandex.practicum.filmorate.enums.Operation;
@@ -146,7 +145,6 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    @Transactional
     public void likeReview(Integer reviewId, Integer userId) {
         log.info("Выполняется запрос: {}", LIKE_REVIEW);
 
@@ -175,7 +173,6 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    @Transactional
     public void dislikeReview(Integer reviewId, Integer userId) {
         log.info("Выполняется запрос: {}", LIKE_REVIEW);
 
