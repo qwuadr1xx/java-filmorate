@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.FilmMapper;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.enums.Entity;
+import ru.yandex.practicum.filmorate.enums.FilmSort;
 import ru.yandex.practicum.filmorate.exception.BadRequestException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -101,8 +102,8 @@ public class FilmService {
 
     }
 
-    public List<Film> searchFilms(String query, String by, String sort) {
-        if (!"year".equals(sort) && !"likes".equals(sort)) {
+    public List<Film> searchFilms(String query, String by, FilmSort sort) {
+        if (!sort.equals(FilmSort.likes) && !sort.equals(FilmSort.year)) {
             throw new BadRequestException("Некорректный параметр сортировки. Используйте 'year' или 'likes'.", Entity.FILM);
         }
         return dbFilmStorage.searchFilms(query, by, sort);

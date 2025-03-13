@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import ru.yandex.practicum.filmorate.enums.FilmSort;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.Storage;
 
@@ -22,6 +23,6 @@ public interface FilmStorage extends Storage<Film> {
 
     List<Long> getFilmsUserById(long userId);
 
-    List<Film> searchFilms(String query, String by, String sort);
+    List<Film> searchFilms(String query, String by, FilmSort sort);
 }
 
