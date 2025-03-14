@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
+import ru.yandex.practicum.filmorate.enums.FilmSort;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -40,10 +41,12 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false, defaultValue = "10") int count) {
-        log.info("Выведение популярных фильмов");
+    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false) Integer count,
+                                      @RequestParam(value = "genreId", required = false) Integer genreId,
+                                      @RequestParam(value = "year", required = false) Integer year) {
+        log.info("Вывод популярных фильмов с фильтром по жанру и году");
 
-        return filmService.getPopularFilms(count);
+        return filmService.getPopularFilms(count, genreId, year);
     }
 
     @PostMapping
@@ -72,5 +75,34 @@ public class FilmController {
         log.info("Удаление лайка");
 
         filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/common")
+    public List<Film> commonFilmsList(@RequestParam Long userId, @RequestParam Long friendId) {
+        log.info("Получен запрос GET /films/common?userId={}&friendId={}", userId, friendId);
+        return filmService.commonFilmsList(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable final Long directorId, @RequestParam final String sortBy) {
+        log.info("Вывод фильмов режиссера {}", directorId);
+
+        return filmService.getFilmsByDirectorWithSort(directorId, sortBy);
+    }
+
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable final long filmId) {
+        log.info("Удаление фильма");
+
+        filmService.deleteFilm(filmId);
+
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "title") String by,
+            @RequestParam(defaultValue = "likes") FilmSort sort) {
+        return filmService.searchFilms(query, by, sort);
     }
 }

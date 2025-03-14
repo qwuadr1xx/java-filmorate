@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,13 +12,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.dto.UserRequest;
+import ru.yandex.practicum.filmorate.model.FeedRecord;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import ru.yandex.practicum.filmorate.dto.UserRequest;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 
 @RestController
 @RequestMapping("/users")
@@ -54,6 +56,13 @@ public class UserController {
         return userService.getIntersectionFriends(id, otherId);
     }
 
+    @GetMapping("/{id}/feed")
+    public List<FeedRecord> getFeedRecord(@PathVariable @Positive final long id) {
+        log.info("Получение последней записи с id: {}", id);
+
+        return userService.getFeedRecord(id);
+    }
+
     @PostMapping
     public User createUser(@Valid @RequestBody final UserRequest userRequest) {
         log.info("Начало добавления пользователя");
@@ -82,4 +91,16 @@ public class UserController {
         return userService.removeFriend(id, friendId);
     }
 
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable final long userId) {
+        log.info("Удаление пользователя");
+
+        userService.deleteUser(userId);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getUsersRecommendations(@PathVariable final long id) {
+        log.info("Получение рекомендаций фильмов для пользователя с id {}", id);
+        return userService.getUsersRecommendations(id);
+    }
 }
